@@ -7,7 +7,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Adivina la Palabra</title>
+<title></title>
 
 <style>
 
@@ -715,11 +715,9 @@ button:hover {
 
 <header>
 
-    <h1>🎯 Adivina la Palabra</h1>
+    <h1 id="gameTitle"></h1>
 
-    <div class="subtitle">
-        Adivina la palabra y su categoría
-    </div>
+    <div id="gameSubtitle" class="subtitle"></div>
 
 </header>
 
@@ -735,9 +733,7 @@ button:hover {
 
     <div class="card">
 
-        <h2>
-            1. ¿Cuántos jugadores?
-        </h2>
+        <h2 id="playersTitle"></h2>
 
         <div
             id="playerSelector"
@@ -751,17 +747,9 @@ button:hover {
 
     <div class="card">
 
-        <h2>
-            2. Elige las categorías
-        </h2>
+        <h2 id="categoriesTitle"></h2>
 
-        <p>
-            Debes seleccionar exactamente
-            <strong id="requiredCategories">
-                2
-            </strong>
-            categorías.
-        </p>
+        <p id="categoriesInstruction"></p>
 
         <div
             id="categoryContainer"
@@ -770,7 +758,7 @@ button:hover {
 
         <div class="selection-count">
 
-            Seleccionadas:
+            <span id="selectedLabel"></span>
             <strong id="selectedCount">
                 0
             </strong>
@@ -780,18 +768,16 @@ button:hover {
         <div class="actions">
 
             <button
+                id="randomCategoriesButton"
                 class="secondary"
                 onclick="selectRandomCategories()"
-            >
-                🎲 Elegir al azar
-            </button>
+            ></button>
 
             <button
+                id="startGameButton"
                 class="primary"
                 onclick="startGame()"
-            >
-                ▶ Comenzar juego
-            </button>
+            ></button>
 
         </div>
 
@@ -815,15 +801,12 @@ button:hover {
 
         <div class="turn">
 
-            <div class="turn-label">
-                LE TOCA A
-            </div>
+            <div id="turnLabel" class="turn-label"></div>
 
             <div
                 id="currentPlayer"
                 class="turn-player"
             >
-                Jugador 1
             </div>
 
         </div>
@@ -831,9 +814,7 @@ button:hover {
 
         <div class="round-info">
 
-            <strong>
-                Ronda
-            </strong>
+            <strong id="roundLabel"></strong>
 
             <div id="roundNumber">
                 1
@@ -844,9 +825,7 @@ button:hover {
 
         <div class="round-info">
 
-            <strong>
-                Palabras restantes
-            </strong>
+            <strong id="remainingWordsLabel"></strong>
 
             <div id="remainingWords">
                 0
@@ -878,9 +857,7 @@ button:hover {
         <div
             id="mainCategory"
             class="main-category"
-        >
-            Categoría oculta
-        </div>
+        ></div>
 
 
         <div
@@ -951,15 +928,15 @@ button:hover {
                 class="guess-input"
                 type="text"
                 autocomplete="off"
-                placeholder="Escribe la palabra..."
             >
 
 
             <div class="category-question">
 
-                <div class="category-question-title">
-                    ¿A qué categoría pertenece?
-                </div>
+                <div
+                    id="categoryQuestionTitle"
+                    class="category-question-title"
+                ></div>
 
 
                 <div
@@ -971,11 +948,10 @@ button:hover {
 
 
             <button
+                id="checkAnswerButton"
                 class="primary"
                 type="submit"
-            >
-                ✓ Comprobar respuesta
-            </button>
+            ></button>
 
         </form>
 
@@ -987,9 +963,7 @@ button:hover {
                 class="secondary"
                 onclick="nextClue()"
                 style="display:none"
-            >
-                💡 Mostrar ayuda
-            </button>
+            ></button>
 
 
             <button
@@ -997,9 +971,7 @@ button:hover {
                 class="primary"
                 onclick="newRound()"
                 style="display:none"
-            >
-                ➡ Nueva ronda
-            </button>
+            ></button>
 
         </div>
 
@@ -1012,9 +984,7 @@ button:hover {
 
     <div class="card solved-panel">
 
-        <h2>
-            📚 Palabras adivinadas
-        </h2>
+        <h2 id="solvedTitle"></h2>
 
         <div id="solvedWords"></div>
 
@@ -1024,11 +994,10 @@ button:hover {
     <div class="actions">
 
         <button
+            id="changeConfigurationButton"
             class="danger"
             onclick="backToSetup()"
-        >
-            ⚙ Cambiar configuración
-        </button>
+        ></button>
 
     </div>
 
@@ -1046,20 +1015,17 @@ button:hover {
 
     <div class="card winner">
 
-        <h2>
-            🏆 ¡Juego terminado!
-        </h2>
+        <h2 id="gameFinishedTitle"></h2>
 
         <div id="finalScores"></div>
 
         <br>
 
         <button
+            id="playAgainButton"
             class="primary"
             onclick="backToSetup()"
-        >
-            🔄 Jugar nuevamente
-        </button>
+        ></button>
 
     </div>
 
@@ -1071,6 +1037,7 @@ button:hover {
 ===================================================== -->
 
 <script src="datos.js"></script>
+<script src="textos.js"></script>
 
 
 <script>
@@ -1210,10 +1177,46 @@ initialize();
 
 function initialize() {
 
-    createPlayerButtons();
+    renderStaticTexts();
 
+    createPlayerButtons();
     renderCategories();
 
+}
+
+function renderStaticTexts() {
+
+    document.title = t("title");
+
+    gameTitle.textContent = t("title");
+    gameSubtitle.textContent = t("subtitle");
+
+    playersTitle.textContent = t("setupPlayersTitle");
+    categoriesTitle.textContent = t("setupCategoriesTitle");
+
+    selectedLabel.textContent = t("selected");
+    randomCategoriesButton.textContent = t("randomCategories");
+    startGameButton.textContent = t("startGame");
+
+    turnLabel.textContent = t("turnLabel");
+    roundLabel.textContent = t("round");
+    remainingWordsLabel.textContent = t("remainingWords");
+
+    categoryQuestionTitle.textContent = t("categoryQuestion");
+    guessInput.placeholder = t("writeWord");
+    checkAnswerButton.textContent = t("checkAnswer");
+
+    nextLevelButton.textContent = t("showHelp");
+    newRoundButton.textContent = t("newRound");
+
+    solvedTitle.textContent = t("solvedTitle");
+    changeConfigurationButton.textContent =
+        t("changeConfiguration");
+
+    gameFinishedTitle.textContent =
+        t("gameFinished");
+    playAgainButton.textContent =
+        t("playAgain");
 }
 
 
@@ -1256,8 +1259,8 @@ function createPlayerButtons() {
 
         button.textContent =
             i === 1
-                ? "1 jugador"
-                : `${i} jugadores`;
+                ? t("onePlayer")
+                : t("manyPlayers", { n: i });
 
 
         button.onclick = () => {
@@ -1285,9 +1288,9 @@ function createPlayerButtons() {
 
 
     playerDescription.textContent =
-        `Se jugará con ${
-            numberOfPlayers + 1
-        } categorías.`;
+        t("playerDescription", {
+            n: numberOfPlayers + 1
+        });
 
 }
 
@@ -1389,12 +1392,15 @@ function renderCategories() {
     );
 
 
+    categoriesInstruction.innerHTML =
+        t("categoriesInstruction", {
+            n: needed
+        });
+
     selectedCount.textContent =
         selectedCategories.length;
 
 }
-
-
 /* =====================================================
    SELECCIONAR / DESELECCIONAR CATEGORÍA
 ===================================================== */
@@ -1533,9 +1539,9 @@ function startGame() {
     ) {
 
         alert(
-            `Debes seleccionar exactamente ${
-                needed
-            } categorías.`
+            t("selectCategories", {
+                n: needed
+            })
         );
 
         return;
@@ -1675,7 +1681,6 @@ function selectAnswerCategory(
 
 }
 
-
 /* =====================================================
    NUEVA PALABRA / NUEVA RONDA
 ===================================================== */
@@ -1755,7 +1760,9 @@ function startNewWord() {
 
 
     status.textContent =
-        `${players[currentPlayerIndex].name}, intenta adivinar la palabra y la categoría.`;
+        t("tryWordAndCategory", {
+            player: players[currentPlayerIndex].name
+        });
 
 
     enableCategoryOptions();
@@ -1772,7 +1779,7 @@ function startNewWord() {
 function renderWord() {
 
     mainCategory.textContent =
-        "Categoría oculta";
+        t("hiddenCategory");
 
 
     mysteryWord.textContent =
@@ -1908,9 +1915,7 @@ guessForm.addEventListener(
 
         if (!answer) {
 
-            alert(
-                "Escribe una palabra."
-            );
+            alert(t("writeAWord"));
 
             return;
 
@@ -1919,9 +1924,7 @@ guessForm.addEventListener(
 
         if (!selectedAnswerCategory) {
 
-            alert(
-                "Selecciona también una categoría."
-            );
+            alert(t("selectCategory"));
 
             return;
 
@@ -1972,13 +1975,9 @@ function playerGuessedCorrectly() {
     player.score++;
 
 
-    status.innerHTML = `
-        🎉
-        <strong>
-            ${player.name}
-        </strong>
-        acertó la palabra y la categoría.
-    `;
+    status.innerHTML = t("correct", {
+        player: player.name
+    });
 
 
     mysteryWord.textContent =
@@ -2051,7 +2050,7 @@ function playerFailed(
 
 
     let feedback =
-        "❌ No es correcto.";
+        t("incorrect");
 
 
     if (
@@ -2060,7 +2059,7 @@ function playerFailed(
     ) {
 
         feedback =
-            "❌ La palabra es correcta, pero la categoría no.";
+            t("wordCorrectCategoryWrong");
 
     }
     else if (
@@ -2069,7 +2068,7 @@ function playerFailed(
     ) {
 
         feedback =
-            "❌ La categoría es correcta, pero la palabra no.";
+            t("wordWrongCategoryCorrect");
 
     }
 
@@ -2104,7 +2103,10 @@ function playerFailed(
 
 
         status.textContent =
-            `${feedback} Ahora intenta ${players[currentPlayerIndex].name}.`;
+            t("nextPlayer", {
+                feedback: feedback,
+                player: players[currentPlayerIndex].name
+            });
 
 
         selectedAnswerCategory = null;
@@ -2196,7 +2198,9 @@ function nextClue() {
 
 
     status.textContent =
-        `💡 Nueva pista. Empieza ${players[roundStarterIndex].name}.`;
+        t("newClue", {
+            player: players[roundStarterIndex].name
+        });
 
 
     guessInput.focus();
@@ -2228,10 +2232,7 @@ function renderClue() {
 
 
         clue.innerHTML = `
-            <strong>
-                Ayuda:
-            </strong>
-
+            <strong>${t("help")}</strong>
             ${currentWord.help}
         `;
 
@@ -2249,7 +2250,9 @@ function renderClue() {
 
 
         subcategory.textContent =
-            `Subcategoría: ${currentWord.subcategory}`;
+            t("subcategory", {
+                category: currentWord.subcategory
+            });
 
 
         level3.className =
@@ -2287,10 +2290,7 @@ function revealWord() {
 
 
     clue.innerHTML = `
-        <strong>
-            Ayuda:
-        </strong>
-
+        <strong>${t("help")}</strong>
         ${currentWord.help}
     `;
 
@@ -2300,56 +2300,41 @@ function revealWord() {
 
 
     subcategory.textContent =
-        `Subcategoría: ${currentWord.subcategory}`;
+        t("subcategory", {
+            category: currentWord.subcategory
+        });
 
 
     status.innerHTML = `
-        🔎 La palabra era
+        ${t("wordWas")}
         <strong>
             ${currentWord.word}
         </strong>
 
         <br>
 
-        Categoría:
+        ${t("category")}
         <strong>
             ${currentWord.mainCategory}
         </strong>
-
-        <br><br>
-
-        ${players[roundStarterIndex].name},
-        puedes volver a intentarlo.
     `;
 
+    // No hay una nueva oportunidad después de revelar la respuesta.
+    currentPlayerIndex = roundStarterIndex;
 
-    /*
-       El jugador que comenzó la ronda
-       tiene una última oportunidad después
-       de que se hayan mostrado todas las pistas.
-    */
-
-    currentPlayerIndex =
-        roundStarterIndex;
-
-
-    guessInput.disabled = false;
+    guessInput.disabled = true;
 
     guessForm.style.display =
-        "block";
+        "none";
 
-
-    enableCategoryOptions();
-
+    disableCategoryOptions();
 
     selectedAnswerCategory = null;
 
     clearCategorySelection();
 
-
-    guessInput.value = "";
-
-    guessInput.focus();
+    newRoundButton.style.display =
+        "inline-block";
 
 }
 
@@ -2494,7 +2479,7 @@ function renderSolvedWords() {
 
                 wordsHTML = `
                     <div class="empty-solved">
-                        Ninguna palabra adivinada todavía.
+                        ${t("noSolvedWords")}
                     </div>
                 `;
 
@@ -2605,7 +2590,7 @@ function updateScoreboard() {
                 </div>
 
                 <div>
-                    puntos
+                    ${t("points")}
                 </div>
 
             `;
@@ -2716,7 +2701,7 @@ function finishGame() {
                     :
 
                     ${player.score}
-                    puntos
+                    ${t("points")}
 
                 </div>
 
@@ -2821,3 +2806,4 @@ function shuffle(array) {
 </body>
 
 </html>
+    
