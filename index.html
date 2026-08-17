@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adivina la Palabra</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: linear-gradient(135deg, #172554, #312e81);
+        color: #fff;
+        min-height: 100vh;
+    }
+
+    .container {
+        width: min(1100px, 94%);
+        margin: auto;
+        padding: 25px 0 50px;
+    }
+
+    header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    h1 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        margin: 10px 0;
+    }
+
+    h2 {
+        margin-top: 0;
+    }
+
+    .subtitle {
+        opacity: .8;
+    }
+
+    .screen {
+        display: none;
+    }
+
+    .screen.active {
+        display: block;
+    }
+
+    .card {
+        background: rgba(255,255,255,.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,.15);
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 15px 40px rgba(0,0,0,.2);
+    }
+
+    .players-selector {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 20px 0;
+    }
+
+    .player-number {
+        background: rgba(255,255,255,.1);
+        color: white;
+        border: 2px solid rgba(255,255,255,.25);
+        border-radius: 12px;
+        padding: 14px 20px;
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+
+    .player-number.selected {
+        background: #f59e0b;
+        border-color: #fbbf24;
+        color: #111827;
+        font-weight: bold;
+    }
+
+    button {
+        border: 0;
+        border-radius: 12px;
+        padding: 13px 20px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: .2s;
+    }
+
+    button:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.08);
+    }
+
+    .primary {
+        background: #f59e0b;
+        color: #111827;
+    }
+
+    .secondary {
+        background: #4f46e5;
+        color: white;
+    }
+
+    .danger {
+        background: #dc2626;
+        color: white;
+    }
+
+    .categories {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+
+    .category-card {
+        position: relative;
+        background: rgba(255,255,255,.08);
+        border: 2px solid rgba(255,255,255,.15);
+        border-radius: 16px;
+        padding: 20px;
+        cursor: pointer;
+        transition: .2s;
+    }
+
+    .category-card:hover {
+        background: rgba(255,255,255,.15);
+    }
+
+    .category-card.selected {
+        border-color: #fbbf24;
+        background: rgba(245,158,11,.2);
+    }
+
+    .category-card.disabled {
+        opacity: .35;
+        cursor: not-allowed;
+    }
+
+    .category-card h3 {
+        margin: 0 0 8px;
+        font-size: 1.4rem;
+    }
+
+    .difficulty {
+        font-size: .9rem;
+        opacity: .7;
+    }
+
+    .selection-count {
+        text-align: center;
+        font-size: 1.2rem;
+        margin: 15px 0;
+    }
+
+    .actions {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    /* JUEGO */
+
+    .game-top {
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr;
+        gap: 15px;
+        align-items: stretch;
+        margin-bottom: 20px;
+    }
+
+    .turn {
+        text-align: center;
+        background: rgba(245,158,11,.2);
+        border: 2px solid #f59e0b;
+        border-radius: 18px;
+        padding: 20px;
+    }
+
+    .turn-label {
+        font-size: .9rem;
+        opacity: .8;
+    }
+
+    .turn-player {
+        font-size: 2rem;
+        font-weight: 900;
+        color: #fbbf24;
+    }
+
+    .round-info {
+        text-align: center;
+        background: rgba(255,255,255,.08);
+        border-radius: 18px;
+        padding: 20px;
+    }
+
+    .scoreboard {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .score {
+        background: rgba(255,255,255,.08);
+        padding: 12px 16px;
+        border-radius: 12px;
+        min-width: 100px;
+        text-align: center;
+    }
+
+    .score.active-player {
+        border: 2px solid #fbbf24;
+        background: rgba(245,158,11,.15);
+    }
+
+    .score-name {
+        font-weight: 700;
+    }
+
+    .score-points {
+        font-size: 1.6rem;
+        color: #fbbf24;
+        font-weight: 900;
+    }
+
+    .word-card {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .main-category {
+        display: inline-block;
+        background: #4f46e5;
+        padding: 7px 15px;
+        border-radius: 20px;
+        margin-bottom: 25px;
+        font-size: .9rem;
+    }
+
+    .mystery-word {
+        font-size: clamp(2rem, 7vw, 5rem);
+        letter-spacing: .12em;
+        font-weight: 900;
+        min-height: 100px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        word-break: break-word;
+    }
+
+    .clue {
+        margin: 25px auto 10px;
+        padding: 18px;
+        max-width: 700px;
+        background: rgba(255,255,255,.08);
+        border-radius: 15px;
+        font-size: 1.25rem;
+    }
+
+    .subcategory {
+        margin-top: 15px;
+        color: #fbbf24;
+        font-weight: 800;
+        font-size: 1.3rem;
+    }
+
+    .status {
+        text-align: center;
+        font-size: 1.15rem;
+        min-height: 30px;
+        margin: 15px;
+    }
+
+    .guess-form {
+        display: flex;
+        gap: 10px;
+        max-width: 700px;
+        margin: 25px auto 10px;
+    }
+
+    .guess-input {
+        flex: 1;
+        padding: 15px;
+        border: 0;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        outline: none;
+    }
+
+    .attempt-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 15px;
+    }
+
+    .level-indicator {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin: 20px 0;
+    }
+
+    .level {
+        width: 35px;
+        height: 8px;
+        border-radius: 10px;
+        background: rgba(255,255,255,.2);
+    }
+
+    .level.active {
+        background: #f59e0b;
+    }
+
+    .level.completed {
+        background: #22c55e;
+    }
+
+    .revealed {
+        color: #22c55e;
+    }
+
+    .winner {
+        text-align: center;
+        padding: 40px;
+    }
+
+    .winner h2 {
+        font-size: 3rem;
+        color: #fbbf24;
+    }
+
+    .used-info {
+        text-align: center;
+        opacity: .7;
+        margin-top: 15px;
+    }
+
+    @media (max-width: 750px) {
+        .game-top {
+            grid-template-columns: 1fr;
+        }
+
+        .guess-form {
+            flex-direction: column;
+        }
+
+        .mystery-word {
+            font-size: 2.3rem;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <h1>🎯 Adivina la Palabra</h1>
+    <div class="subtitle">
+        Descubre la palabra a partir de sus consonantes
+    </div>
+</header>
+
+<!-- =========================
+     CONFIGURACIÓN
+========================= -->
+
+<section id="setupScreen" class="screen active">
+
+    <div class="card">
+        <h2>1. ¿Cuántos jugadores?</h2>
+
+        <div id="playerSelector" class="players-selector"></div>
+
+        <p id="playerDescription"></p>
+    </div>
+
+    <div class="card">
+        <h2>2. Elige las categorías</h2>
+
+        <p>
+            Debes seleccionar exactamente
+            <strong id="requiredCategories">2</strong>
+            categorías.
+        </p>
+
+        <div id="categoryContainer" class="categories"></div>
+
+        <div class="selection-count">
+            Seleccionadas:
+            <strong id="selectedCount">0</strong>
+        </div>
+
+        <div class="actions">
+            <button class="secondary" onclick="selectRandomCategories()">
+                🎲 Elegir al azar
+            </button>
+
+            <button class="primary" onclick="startGame()">
+                ▶ Comenzar juego
+            </button>
+        </div>
+    </div>
+
+</section>
+
+
+<!-- =========================
+     JUEGO
+========================= -->
+
+<section id="gameScreen" class="screen">
+
+    <div class="game-top">
+
+        <div class="turn">
+            <div class="turn-label">LE TOCA A</div>
+            <div id="currentPlayer" class="turn-player">
+                Jugador 1
+            </div>
+        </div>
+
+        <div class="round-info">
+            <strong>Ronda</strong>
+            <div id="roundNumber">1</div>
+        </div>
+
+        <div class="round-info">
+            <strong>Palabras restantes</strong>
+            <div id="remainingWords">0</div>
+        </div>
+
+    </div>
+
+    <div class="card">
+        <div id="scoreboard" class="scoreboard"></div>
+    </div>
+
+    <div class="card word-card">
+
+        <div id="mainCategory" class="main-category">
+            Categoría
+        </div>
+
+        <div id="mysteryWord" class="mystery-word">
+            ---
+        </div>
+
+        <div class="level-indicator">
+            <div id="level1" class="level active"></div>
+            <div id="level2" class="level"></div>
+            <div id="level3" class="level"></div>
+        </div>
+
+        <div id="clue" class="clue" style="display:none;"></div>
+
+        <div id="subcategory" class="subcategory" style="display:none;"></div>
+
+        <div id="status" class="status"></div>
+
+        <form id="guessForm" class="guess-form">
+            <input
+                id="guessInput"
+                class="guess-input"
+                type="text"
+                autocomplete="off"
+                placeholder="Escribe tu respuesta..."
+            >
+            <button class="primary" type="submit">
+                Adivinar
+            </button>
+        </form>
+
+        <div class="attempt-buttons">
+            <button
+                id="nextLevelButton"
+                class="secondary"
+                onclick="nextClue()"
+                style="display:none;"
+            >
+                💡 Mostrar ayuda
+            </button>
+
+            <button
+                id="newRoundButton"
+                class="primary"
+                onclick="newRound()"
+                style="display:none;"
+            >
+                ➡ Nueva ronda
+            </button>
+        </div>
+
+        <div id="usedInfo" class="used-info"></div>
+
+    </div>
+
+    <div class="actions">
+        <button class="danger" onclick="backToSetup()">
+            ⚙ Cambiar configuración
+        </button>
+    </div>
+
+</section>
+
+
+<!-- =========================
+     FIN
+========================= -->
+
+<section id="endScreen" class="screen">
+
+    <div class="card winner">
+        <h2>🏆 ¡Juego terminado!</h2>
+
+        <div id="finalScores"></div>
+
+        <br>
+
+        <button class="primary" onclick="backToSetup()">
+            🔄 Jugar nuevamente
+        </button>
+    </div>
+
+</section>
+
+</div>
+
+
+<script>
+
+/* ==========================================================
+   DATOS DEL JUEGO
+========================================================== */
+
+const GAME_DATA = [
+
+    {
+        category: "Beatitudes",
+        dificultad: 1,
+        fortext: "Dichosos los que tienen…",
+
+        words: [
+
+            {
+                category: "Corazón",
+
+                words: [
+                    "corazón PURO",
+                    "corazón POBRE",
+                    "corazón MANSO"
+                ],
+
+                help: [
+                    "porque verán a Dios",
+                    "porque a ellos les pertenece el Reino de los Cielos",
+                    "porque poseerán la tierra"
+                ]
+            },
+
+            {
+                category: "Justicia",
+
+                words: [
+                    "HAMBRE de justicia",
+                    "PERDONAN injusticias",
+                    "TRABAJAN por la justicia",
+                    "SUFREN injusticias"
+                ],
+
+                help: [
+                    "y sed",
+                    "misericordiosas",
+                    "y la paz",
+                    "a causa de mi nombre"
+                ]
+            }
+        ]
+    },
+
+
+    {
+        category: "Naturaleza",
+        dificultad: 1,
+        fortext: "Símbolos de Dios",
+
+        words: [
+
+            {
+                category: "Animales",
+
+                words: [
+                    "PALOMA",
+                    "LEON",
+                    "CORDERO"
+                ],
+
+                help: [
+                    "de la paz",
+                    "de Judá",
+                    "que quita el pecado del mundo"
+                ]
+            },
+
+            {
+                category: "Elementos",
+
+                words: [
+                    "LUZ",
+                    "AGUA",
+                    "AIRE",
+                    "FUEGO"
+                ],
+
+                help: [
+                    "ilumina",
+                    "hidrata",
+                    "oxigena",
+                    "transforma"
+                ],
+
+                PN: false
+            }
+        ]
+    },
+
+
+    {
+        category: "Juicio",
+        dificultad: 3,
+        fortext: "Variables de las que depende el juicio",
+
+        words: [
+
+            {
+                category: "Punibilidad",
+
+                words: [
+                    "CONCIENCIA",
+                    "GRAVEDAD",
+                    "CONSENTIMIENTO"
+                ],
+
+                help: [
+                    "entendimiento",
+                    "venial o mortal",
+                    "intención"
+                ]
+            },
+
+            {
+                category: "Agravamiento o Ayuda",
+
+                words: [
+                    "CONTEXTO",
+                    "CONTRICIÓN",
+                    "CONDUCTA",
+                    "CONVERSIÓN"
+                ],
+
+                help: [
+                    "circunstancia",
+                    "arrepentimiento",
+                    "premio",
+                    "transformación"
+                ]
+            }
+        ]
+    }
+
+];
+
+
+/* ==========================================================
+   ESTADO DEL JUEGO
+========================================================== */
+
+let numberOfPlayers = 1;
+let selectedCategories = [];
+
+let players = [];
+let currentPlayerIndex = 0;
+
+let availableWords = [];
+let currentWord = null;
+
+let clueLevel = 1;
+
+let roundNumber = 0;
+
+let wordsPlayed = 0;
+
+
+/* ==========================================================
+   ELEMENTOS HTML
+========================================================== */
+
+const setupScreen = document.getElementById("setupScreen");
+const gameScreen = document.getElementById("gameScreen");
+const endScreen = document.getElementById("endScreen");
+
+const playerSelector = document.getElementById("playerSelector");
+const playerDescription = document.getElementById("playerDescription");
+
+const categoryContainer =
+    document.getElementById("categoryContainer");
+
+const requiredCategories =
+    document.getElementById("requiredCategories");
+
+const selectedCount =
+    document.getElementById("selectedCount");
+
+const currentPlayer =
+    document.getElementById("currentPlayer");
+
+const roundNumberElement =
+    document.getElementById("roundNumber");
+
+const remainingWords =
+    document.getElementById("remainingWords");
+
+const scoreboard =
+    document.getElementById("scoreboard");
+
+const mainCategory =
+    document.getElementById("mainCategory");
+
+const mysteryWord =
+    document.getElementById("mysteryWord");
+
+const clue =
+    document.getElementById("clue");
+
+const subcategory =
+    document.getElementById("subcategory");
+
+const status =
+    document.getElementById("status");
+
+const guessForm =
+    document.getElementById("guessForm");
+
+const guessInput =
+    document.getElementById("guessInput");
+
+const nextLevelButton =
+    document.getElementById("nextLevelButton");
+
+const newRoundButton =
+    document.getElementById("newRoundButton");
+
+const usedInfo =
+    document.getElementById("usedInfo");
+
+
+/* ==========================================================
+   INICIALIZACIÓN
+========================================================== */
+
+function initialize() {
+
+    createPlayerButtons();
+    renderCategories();
+
+}
+
+initialize();
+
+
+/* ==========================================================
+   JUGADORES
+========================================================== */
+
+function createPlayerButtons() {
+
+    playerSelector.innerHTML = "";
+
+    /*
+       Para N jugadores necesitamos N+1 categorías.
+       Como actualmente existen 3 categorías principales,
+       podemos tener entre 1 y 2 jugadores.
+    */
+
+    const maxPlayers = Math.max(1, GAME_DATA.length - 1);
+
+    for (let i = 1; i <= maxPlayers; i++) {
+
+        const button = document.createElement("button");
+
+        button.className = "player-number";
+
+        if (i === numberOfPlayers) {
+            button.classList.add("selected");
+        }
+
+        button.textContent = i === 1
+            ? "1 jugador"
+            : `${i} jugadores`;
+
+        button.onclick = () => {
+
+            numberOfPlayers = i;
+
+            createPlayerButtons();
+            renderCategories();
+
+        };
+
+        playerSelector.appendChild(button);
+    }
+
+    requiredCategories.textContent =
+        numberOfPlayers + 1;
+
+    playerDescription.textContent =
+        `Se seleccionarán ${numberOfPlayers + 1} categorías para la partida.`;
+}
+
+
+/* ==========================================================
+   CATEGORÍAS
+========================================================== */
+
+function renderCategories() {
+
+    categoryContainer.innerHTML = "";
+
+    const needed = numberOfPlayers + 1;
+
+    GAME_DATA.forEach((category, index) => {
+
+        const card = document.createElement("div");
+
+        card.className = "category-card";
+
+        if (selectedCategories.includes(index)) {
+            card.classList.add("selected");
+        }
+
+        if (
+            !selectedCategories.includes(index) &&
+            selectedCategories.length >= needed
+        ) {
+            card.classList.add("disabled");
+        }
+
+        card.innerHTML = `
+            <h3>${category.category}</h3>
+
+            <div>
+                ${category.fortext}
+            </div>
+
+            <div class="difficulty">
+                Dificultad: ${"⭐".repeat(category.dificultad)}
+            </div>
+        `;
+
+        card.onclick = () => {
+
+            if (
+                !selectedCategories.includes(index) &&
+                selectedCategories.length >= needed
+            ) {
+                return;
+            }
+
+            toggleCategory(index);
+
+        };
+
+        categoryContainer.appendChild(card);
+    });
+
+    selectedCount.textContent =
+        selectedCategories.length;
+}
+
+
+function toggleCategory(index) {
+
+    const position =
+        selectedCategories.indexOf(index);
+
+    if (position >= 0) {
+
+        selectedCategories.splice(position, 1);
+
+    } else {
+
+        if (
+            selectedCategories.length <
+            numberOfPlayers + 1
+        ) {
+            selectedCategories.push(index);
+        }
+    }
+
+    renderCategories();
+}
+
+
+/* ==========================================================
+   SELECCIÓN ALEATORIA
+========================================================== */
+
+function selectRandomCategories() {
+
+    const amount = numberOfPlayers + 1;
+
+    const indexes =
+        GAME_DATA.map((_, index) => index);
+
+    shuffle(indexes);
+
+    selectedCategories =
+        indexes.slice(0, amount);
+
+    renderCategories();
+}
+
+
+/* ==========================================================
+   CONSTRUIR LISTA DE PALABRAS
+========================================================== */
+
+function buildWordPool() {
+
+    availableWords = [];
+
+    selectedCategories.forEach(categoryIndex => {
+
+        const mainCategory =
+            GAME_DATA[categoryIndex];
+
+        mainCategory.words.forEach(subcategory => {
+
+            subcategory.words.forEach((word, index) => {
+
+                availableWords.push({
+
+                    word: word,
+
+                    help:
+                        subcategory.help[index] || "",
+
+                    subcategory:
+                        subcategory.category,
+
+                    mainCategory:
+                        mainCategory.category,
+
+                    fortext:
+                        mainCategory.fortext
+
+                });
+
+            });
+
+        });
+
+    });
+
+}
+
+
+/* ==========================================================
+   COMENZAR
+========================================================== */
+
+function startGame() {
+
+    const needed = numberOfPlayers + 1;
+
+    if (selectedCategories.length !== needed) {
+
+        alert(
+            `Debes seleccionar exactamente ${needed} categorías.`
+        );
+
+        return;
+    }
+
+    players = [];
+
+    for (let i = 0; i < numberOfPlayers; i++) {
+
+        players.push({
+
+            name: `Jugador ${i + 1}`,
+
+            score: 0
+
+        });
+
+    }
+
+    currentPlayerIndex = 0;
+
+    roundNumber = 0;
+
+    wordsPlayed = 0;
+
+    buildWordPool();
+
+    showScreen(gameScreen);
+
+    startNewWord();
+}
+
+
+/* ==========================================================
+   NUEVA PALABRA
+========================================================== */
+
+function startNewWord() {
+
+    if (availableWords.length === 0) {
+
+        finishGame();
+
+        return;
+    }
+
+    roundNumber++;
+
+    clueLevel = 1;
+
+    /*
+       Elegimos una palabra al azar y la eliminamos
+       del conjunto disponible.
+    */
+
+    const randomIndex =
+        Math.floor(Math.random() * availableWords.length);
+
+    currentWord =
+        availableWords.splice(randomIndex, 1)[0];
+
+    wordsPlayed++;
+
+    renderWord();
+
+    updateScoreboard();
+
+    guessInput.value = "";
+
+    guessInput.disabled = false;
+
+    guessForm.style.display = "flex";
+
+    nextLevelButton.style.display = "none";
+
+    newRoundButton.style.display = "none";
+
+    status.textContent =
+        `${players[currentPlayerIndex].name}, intenta adivinar.`;
+
+    usedInfo.textContent =
+        `Palabras jugadas: ${wordsPlayed}`;
+
+    guessInput.focus();
+}
+
+
+/* ==========================================================
+   MOSTRAR PALABRA
+========================================================== */
+
+function renderWord() {
+
+    mainCategory.textContent =
+        currentWord.mainCategory;
+
+    mysteryWord.textContent =
+        onlyConsonants(currentWord.word);
+
+    clue.style.display = "none";
+    subcategory.style.display = "none";
+
+    document.getElementById("level1")
+        .className = "level active";
+
+    document.getElementById("level2")
+        .className = "level";
+
+    document.getElementById("level3")
+        .className = "level";
+
+    roundNumberElement.textContent =
+        roundNumber;
+
+    remainingWords.textContent =
+        availableWords.length + 1;
+}
+
+
+/* ==========================================================
+   CONSONANTES
+========================================================== */
+
+function onlyConsonants(text) {
+
+    /*
+       Eliminamos vocales españolas, incluyendo
+       sus versiones acentuadas.
+
+       La Y se conserva como consonante.
+    */
+
+    return text
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[AEIOUaeiou]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toUpperCase();
+}
+
+
+/* ==========================================================
+   PROCESAR RESPUESTA
+========================================================== */
+
+guessForm.addEventListener("submit", function(event) {
+
+    event.preventDefault();
+
+    const answer =
+        normalizeAnswer(guessInput.value);
+
+    if (!answer) return;
+
+    const correct =
+        normalizeAnswer(currentWord.word) === answer;
+
+    if (correct) {
+
+        playerGuessedCorrectly();
+
+    } else {
+
+        playerFailed();
+
+    }
+
+});
+
+
+function normalizeAnswer(text) {
+
+    return text
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N} ]/gu, "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+
+/* ==========================================================
+   ACIERTO
+========================================================== */
+
+function playerGuessedCorrectly() {
+
+    players[currentPlayerIndex].score++;
+
+    status.innerHTML =
+        `🎉 <strong>${players[currentPlayerIndex].name}</strong> acertó.`;
+
+    mysteryWord.textContent =
+        currentWord.word;
+
+    mysteryWord.classList.add("revealed");
+
+    guessInput.disabled = true;
+
+    guessForm.style.display = "none";
+
+    nextLevelButton.style.display = "none";
+
+    newRoundButton.style.display = "inline-block";
+
+    updateScoreboard();
+
+    /*
+       El siguiente jugador será el primero de la
+       próxima ronda.
+    */
+
+    currentPlayerIndex =
+        (currentPlayerIndex + 1) % players.length;
+}
+
+
+/* ==========================================================
+   FALLO
+========================================================== */
+
+function playerFailed() {
+
+    guessInput.value = "";
+
+    /*
+       Si hay más jugadores, el turno pasa al siguiente.
+       La pista solamente aparece cuando todos fallaron.
+    */
+
+    const nextPlayer =
+        (currentPlayerIndex + 1) % players.length;
+
+    /*
+       Determinamos si todos los jugadores ya tuvieron
+       oportunidad en este nivel.
+
+       playerAttempts contiene los jugadores que ya
+       intentaron en el nivel actual.
+    */
+
+    playerAttempts.add(currentPlayerIndex);
+
+    if (playerAttempts.size < players.length) {
+
+        currentPlayerIndex = nextPlayer;
+
+        updateCurrentPlayer();
+
+        status.textContent =
+            `❌ No es correcto. Ahora intenta ${players[currentPlayerIndex].name}.`;
+
+        guessInput.focus();
+
+        return;
+    }
+
+    /*
+       Todos fallaron.
+    */
+
+    playerAttempts.clear();
+
+    if (clueLevel < 3) {
+
+        nextClue();
+
+    } else {
+
+        revealWord();
+
+    }
+}
+
+
+/* ==========================================================
+   CONTROL DE INTENTOS
+========================================================== */
+
+let playerAttempts = new Set();
+
+
+/* ==========================================================
+   SIGUIENTE PISTA
+========================================================== */
+
+function nextClue() {
+
+    clueLevel++;
+
+    playerAttempts.clear();
+
+    /*
+       Volvemos a empezar la ronda de intentos con
+       el jugador que inició el nivel anterior.
+    */
+
+    renderClue();
+
+    updateCurrentPlayer();
+
+    status.textContent =
+        `💡 Nueva pista. Empieza ${players[currentPlayerIndex].name}.`;
+
+    guessInput.focus();
+}
+
+
+function renderClue() {
+
+    const level2 =
+        document.getElementById("level2");
+
+    const level3 =
+        document.getElementById("level3");
+
+    if (clueLevel >= 2) {
+
+        clue.style.display = "block";
+
+        clue.innerHTML =
+            `<strong>Ayuda:</strong> ${currentWord.help}`;
+
+        level2.className =
+            "level active";
+    }
+
+    if (clueLevel >= 3) {
+
+        subcategory.style.display = "block";
+
+        subcategory.textContent =
+            `Subcategoría: ${currentWord.subcategory}`;
+
+        level3.className =
+            "level active";
+    }
+}
+
+
+/* ==========================================================
+   REVELAR PALABRA
+========================================================== */
+
+function revealWord() {
+
+    playerAttempts.clear();
+
+    mysteryWord.textContent =
+        currentWord.word;
+
+    mysteryWord.classList.add("revealed");
+
+    clue.style.display = "block";
+
+    clue.innerHTML =
+        `<strong>Ayuda:</strong> ${currentWord.help}`;
+
+    subcategory.style.display = "block";
+
+    subcategory.textContent =
+        `Subcategoría: ${currentWord.subcategory}`;
+
+    status.innerHTML =
+        `🔎 La palabra era <strong>${currentWord.word}</strong>`;
+
+    guessInput.disabled = false;
+
+    guessInput.value = "";
+
+    /*
+       Después de revelar la palabra, el jugador que
+       estaba intentando puede volver a intentarlo.
+    */
+
+    status.innerHTML +=
+        `<br><small>${players[currentPlayerIndex].name}, puedes volver a intentarlo.</small>`;
+
+    guessInput.focus();
+}
+
+
+/* ==========================================================
+   ACTUALIZAR JUGADOR
+========================================================== */
+
+function updateCurrentPlayer() {
+
+    currentPlayer.textContent =
+        players[currentPlayerIndex].name;
+
+    updateScoreboard();
+}
+
+
+/* ==========================================================
+   MARCADOR
+========================================================== */
+
+function updateScoreboard() {
+
+    scoreboard.innerHTML = "";
+
+    players.forEach((player, index) => {
+
+        const div =
+            document.createElement("div");
+
+        div.className = "score";
+
+        if (index === currentPlayerIndex) {
+            div.classList.add("active-player");
+        }
+
+        div.innerHTML = `
+            <div class="score-name">
+                ${player.name}
+            </div>
+
+            <div class="score-points">
+                ${player.score}
+            </div>
+
+            <div>puntos</div>
+        `;
+
+        scoreboard.appendChild(div);
+
+    });
+
+    currentPlayer.textContent =
+        players[currentPlayerIndex].name;
+}
+
+
+/* ==========================================================
+   NUEVA RONDA
+========================================================== */
+
+function newRound() {
+
+    mysteryWord.classList.remove("revealed");
+
+    currentPlayerIndex =
+        currentPlayerIndex % players.length;
+
+    startNewWord();
+}
+
+
+/* ==========================================================
+   FIN DEL JUEGO
+========================================================== */
+
+function finishGame() {
+
+    showScreen(endScreen);
+
+    const sortedPlayers =
+        [...players].sort((a, b) => b.score - a.score);
+
+    let html = "";
+
+    sortedPlayers.forEach((player, index) => {
+
+        const medal =
+            index === 0 ? "🏆" :
+            index === 1 ? "🥈" :
+            index === 2 ? "🥉" :
+            "👤";
+
+        html += `
+            <div class="card">
+                ${medal}
+                <strong>${player.name}</strong>:
+                ${player.score} puntos
+            </div>
+        `;
+
+    });
+
+    document.getElementById("finalScores").innerHTML =
+        html;
+}
+
+
+/* ==========================================================
+   NAVEGACIÓN
+========================================================== */
+
+function showScreen(screen) {
+
+    setupScreen.classList.remove("active");
+    gameScreen.classList.remove("active");
+    endScreen.classList.remove("active");
+
+    screen.classList.add("active");
+}
+
+
+function backToSetup() {
+
+    showScreen(setupScreen);
+
+    selectedCategories = [];
+
+    renderCategories();
+
+}
+
+
+/* ==========================================================
+   UTILIDADES
+========================================================== */
+
+function shuffle(array) {
+
+    for (let i = array.length - 1; i > 0; i--) {
+
+        const j =
+            Math.floor(Math.random() * (i + 1));
+
+        [array[i], array[j]] =
+            [array[j], array[i]];
+    }
+
+    return array;
+}
+
+</script>
+
+</body>
+</html>
