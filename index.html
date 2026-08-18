@@ -1,0 +1,2823 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title></title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    color: white;
+
+    background:
+        linear-gradient(
+            135deg,
+            #172554,
+            #312e81
+        );
+}
+
+.container {
+    width: min(1150px, 94%);
+    margin: auto;
+    padding: 25px 0 50px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+h1 {
+    margin: 10px 0;
+
+    font-size:
+        clamp(2rem, 5vw, 3.5rem);
+}
+
+h2 {
+    margin-top: 0;
+}
+
+.subtitle {
+    opacity: .8;
+}
+
+.screen {
+    display: none;
+}
+
+.screen.active {
+    display: block;
+}
+
+.card {
+    background: rgba(255,255,255,.10);
+
+    backdrop-filter: blur(10px);
+
+    border:
+        1px solid
+        rgba(255,255,255,.15);
+
+    border-radius: 20px;
+
+    padding: 25px;
+
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 15px 40px
+        rgba(0,0,0,.20);
+}
+
+
+/* =====================================================
+   BOTONES
+===================================================== */
+
+button {
+    border: 0;
+
+    border-radius: 12px;
+
+    padding: 13px 20px;
+
+    font-size: 1rem;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: .2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+
+    filter: brightness(1.08);
+}
+
+.primary {
+    background: #f59e0b;
+    color: #111827;
+}
+
+.secondary {
+    background: #4f46e5;
+    color: white;
+}
+
+.danger {
+    background: #dc2626;
+    color: white;
+}
+
+.actions {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+}
+
+
+/* =====================================================
+   JUGADORES
+===================================================== */
+
+.players-selector {
+    display: flex;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    margin: 20px 0;
+}
+
+.player-number {
+    background:
+        rgba(255,255,255,.10);
+
+    color: white;
+
+    border:
+        2px solid
+        rgba(255,255,255,.25);
+}
+
+.player-number.selected {
+    background: #f59e0b;
+
+    border-color: #fbbf24;
+
+    color: #111827;
+}
+
+
+/* =====================================================
+   CATEGORÍAS DE CONFIGURACIÓN
+===================================================== */
+
+.categories {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(230px, 1fr)
+        );
+
+    gap: 15px;
+
+    margin: 20px 0;
+}
+
+.category-card {
+    background:
+        rgba(255,255,255,.08);
+
+    border:
+        2px solid
+        rgba(255,255,255,.15);
+
+    border-radius: 16px;
+
+    padding: 20px;
+
+    cursor: pointer;
+
+    transition: .2s;
+}
+
+.category-card:hover {
+    background:
+        rgba(255,255,255,.15);
+}
+
+.category-card.selected {
+    border-color: #fbbf24;
+
+    background:
+        rgba(245,158,11,.20);
+}
+
+.category-card.disabled {
+    opacity: .35;
+
+    cursor: not-allowed;
+}
+
+.category-card h3 {
+    margin:
+        0 0 8px;
+
+    font-size: 1.4rem;
+}
+
+.difficulty {
+    font-size: .9rem;
+
+    opacity: .7;
+
+    margin-top: 10px;
+}
+
+.selection-count {
+    text-align: center;
+
+    font-size: 1.2rem;
+
+    margin: 15px 0;
+}
+
+
+/* =====================================================
+   PARTE SUPERIOR
+===================================================== */
+
+.game-top {
+    display: grid;
+
+    grid-template-columns:
+        1fr 2fr 1fr;
+
+    gap: 15px;
+
+    align-items: stretch;
+
+    margin-bottom: 20px;
+}
+
+.turn {
+    text-align: center;
+
+    background:
+        rgba(245,158,11,.20);
+
+    border:
+        2px solid
+        #f59e0b;
+
+    border-radius: 18px;
+
+    padding: 20px;
+}
+
+.turn-label {
+    font-size: .9rem;
+
+    opacity: .8;
+}
+
+.turn-player {
+    font-size: 2rem;
+
+    font-weight: 900;
+
+    color: #fbbf24;
+}
+
+.round-info {
+    text-align: center;
+
+    background:
+        rgba(255,255,255,.08);
+
+    border-radius: 18px;
+
+    padding: 20px;
+}
+
+
+/* =====================================================
+   MARCADOR
+===================================================== */
+
+.scoreboard {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+}
+
+.score {
+    background:
+        rgba(255,255,255,.08);
+
+    padding: 12px 16px;
+
+    border-radius: 12px;
+
+    min-width: 110px;
+
+    text-align: center;
+}
+
+.score.active-player {
+    border:
+        2px solid
+        #fbbf24;
+
+    background:
+        rgba(245,158,11,.15);
+}
+
+.score-name {
+    font-weight: 700;
+}
+
+.score-points {
+    font-size: 1.6rem;
+
+    color: #fbbf24;
+
+    font-weight: 900;
+}
+
+
+/* =====================================================
+   PALABRA
+===================================================== */
+
+.word-card {
+    text-align: center;
+
+    padding: 40px 20px;
+}
+
+.main-category {
+    display: inline-block;
+
+    background:
+        #4f46e5;
+
+    padding:
+        7px 15px;
+
+    border-radius: 20px;
+
+    margin-bottom: 25px;
+
+    font-size: .9rem;
+}
+
+.mystery-word {
+    font-size:
+        clamp(
+            2rem,
+            7vw,
+            5rem
+        );
+
+    letter-spacing: .12em;
+
+    font-weight: 900;
+
+    min-height: 100px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    word-break: break-word;
+}
+
+.mystery-word.revealed {
+    color: #22c55e;
+}
+
+.clue {
+    margin:
+        25px auto 10px;
+
+    padding: 18px;
+
+    max-width: 700px;
+
+    background:
+        rgba(255,255,255,.08);
+
+    border-radius: 15px;
+
+    font-size: 1.2rem;
+}
+
+.subcategory {
+    margin-top: 15px;
+
+    color: #fbbf24;
+
+    font-weight: 800;
+
+    font-size: 1.3rem;
+}
+
+.status {
+    text-align: center;
+
+    font-size: 1.15rem;
+
+    min-height: 35px;
+
+    margin: 15px;
+}
+
+
+/* =====================================================
+   RESPUESTA
+===================================================== */
+
+.guess-form {
+    max-width: 800px;
+
+    margin:
+        25px auto 10px;
+}
+
+.guess-input {
+    width: 100%;
+
+    padding: 15px;
+
+    border: 0;
+
+    border-radius: 12px;
+
+    font-size: 1.1rem;
+
+    outline: none;
+
+    margin-bottom: 15px;
+}
+
+
+/* =====================================================
+   OPCIONES DE CATEGORÍA
+===================================================== */
+
+.category-question {
+    margin:
+        20px auto;
+}
+
+.category-question-title {
+    font-size: 1.1rem;
+
+    font-weight: 700;
+
+    margin-bottom: 12px;
+}
+
+.category-options {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(160px, 1fr)
+        );
+
+    gap: 10px;
+}
+
+.category-option {
+    padding: 15px;
+
+    border-radius: 12px;
+
+    border:
+        2px solid
+        rgba(255,255,255,.18);
+
+    background:
+        rgba(255,255,255,.07);
+
+    color: white;
+
+    cursor: pointer;
+
+    font-weight: 700;
+
+    transition: .2s;
+}
+
+.category-option:hover {
+    background:
+        rgba(255,255,255,.15);
+}
+
+.category-option.selected {
+    background:
+        #f59e0b;
+
+    color: #111827;
+
+    border-color:
+        #fbbf24;
+}
+
+.category-option:disabled {
+    opacity: .6;
+
+    cursor: not-allowed;
+}
+
+
+/* =====================================================
+   NIVELES
+===================================================== */
+
+.level-indicator {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    margin: 20px 0;
+}
+
+.level {
+    width: 35px;
+
+    height: 8px;
+
+    border-radius: 10px;
+
+    background:
+        rgba(255,255,255,.2);
+}
+
+.level.active {
+    background:
+        #f59e0b;
+}
+
+.level.completed {
+    background:
+        #22c55e;
+}
+
+
+/* =====================================================
+   TABLA DE PALABRAS ADIVINADAS
+===================================================== */
+
+.solved-panel {
+    margin-top: 20px;
+}
+
+.solved-category {
+    margin-bottom: 25px;
+
+    padding-bottom: 18px;
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,.10);
+}
+
+.solved-category:last-child {
+    border-bottom: 0;
+}
+
+.solved-category-title {
+    font-size: 1.35rem;
+
+    font-weight: 900;
+
+    color: #fbbf24;
+
+    margin-bottom: 4px;
+}
+
+.solved-category-description {
+    opacity: .75;
+
+    font-size: .95rem;
+
+    margin-bottom: 12px;
+
+    font-style: italic;
+}
+
+.solved-list {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+}
+
+.solved-word {
+    background:
+        rgba(34,197,94,.15);
+
+    border:
+        1px solid
+        rgba(34,197,94,.35);
+
+    border-radius: 10px;
+
+    padding:
+        8px 12px;
+
+    color: #dcfce7;
+
+    font-size: .95rem;
+}
+
+.empty-solved {
+    opacity: .5;
+
+    font-style: italic;
+
+    padding: 5px 0;
+}
+
+
+/* =====================================================
+   FINAL
+===================================================== */
+
+.winner {
+    text-align: center;
+
+    padding: 40px;
+}
+
+.winner h2 {
+    font-size: 3rem;
+
+    color: #fbbf24;
+}
+
+.final-score {
+    font-size: 1.3rem;
+
+    margin: 10px 0;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 750px) {
+
+    .game-top {
+        grid-template-columns: 1fr;
+    }
+
+    .mystery-word {
+        font-size: 2.3rem;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+
+<header>
+
+    <h1 id="gameTitle"></h1>
+
+    <div id="gameSubtitle" class="subtitle"></div>
+
+</header>
+
+
+<!-- =====================================================
+     CONFIGURACIÓN
+===================================================== -->
+
+<section
+    id="setupScreen"
+    class="screen active"
+>
+
+    <div class="card">
+
+        <h2 id="playersTitle"></h2>
+
+        <div
+            id="playerSelector"
+            class="players-selector"
+        ></div>
+
+        <p id="playerDescription"></p>
+
+    </div>
+
+
+    <div class="card">
+
+        <h2 id="categoriesTitle"></h2>
+
+        <p id="categoriesInstruction"></p>
+
+        <div
+            id="categoryContainer"
+            class="categories"
+        ></div>
+
+        <div class="selection-count">
+
+            <span id="selectedLabel"></span>
+            <strong id="selectedCount">
+                0
+            </strong>
+
+        </div>
+
+        <div class="actions">
+
+            <button
+                id="randomCategoriesButton"
+                class="secondary"
+                onclick="selectRandomCategories()"
+            ></button>
+
+            <button
+                id="startGameButton"
+                class="primary"
+                onclick="startGame()"
+            ></button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     JUEGO
+===================================================== -->
+
+<section
+    id="gameScreen"
+    class="screen"
+>
+
+
+    <div class="game-top">
+
+
+        <div class="turn">
+
+            <div id="turnLabel" class="turn-label"></div>
+
+            <div
+                id="currentPlayer"
+                class="turn-player"
+            >
+            </div>
+
+        </div>
+
+
+        <div class="round-info">
+
+            <strong id="roundLabel"></strong>
+
+            <div id="roundNumber">
+                1
+            </div>
+
+        </div>
+
+
+        <div class="round-info">
+
+            <strong id="remainingWordsLabel"></strong>
+
+            <div id="remainingWords">
+                0
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- MARCADOR -->
+
+    <div class="card">
+
+        <div
+            id="scoreboard"
+            class="scoreboard"
+        ></div>
+
+    </div>
+
+
+    <!-- PALABRA -->
+
+    <div class="card word-card">
+
+
+        <div
+            id="mainCategory"
+            class="main-category"
+        ></div>
+
+
+        <div
+            id="mysteryWord"
+            class="mystery-word"
+        >
+            ---
+        </div>
+
+
+        <!-- NIVELES -->
+
+        <div class="level-indicator">
+
+            <div
+                id="level1"
+                class="level active"
+            ></div>
+
+            <div
+                id="level2"
+                class="level"
+            ></div>
+
+            <div
+                id="level3"
+                class="level"
+            ></div>
+
+        </div>
+
+
+        <!-- AYUDA -->
+
+        <div
+            id="clue"
+            class="clue"
+            style="display:none"
+        ></div>
+
+
+        <!-- SUBCATEGORÍA -->
+
+        <div
+            id="subcategory"
+            class="subcategory"
+            style="display:none"
+        ></div>
+
+
+        <!-- ESTADO -->
+
+        <div
+            id="status"
+            class="status"
+        ></div>
+
+
+        <!-- RESPUESTA -->
+
+        <form
+            id="guessForm"
+            class="guess-form"
+        >
+
+            <input
+                id="guessInput"
+                class="guess-input"
+                type="text"
+                autocomplete="off"
+            >
+
+
+            <div class="category-question">
+
+                <div
+                    id="categoryQuestionTitle"
+                    class="category-question-title"
+                ></div>
+
+
+                <div
+                    id="categoryOptions"
+                    class="category-options"
+                ></div>
+
+            </div>
+
+
+            <button
+                id="checkAnswerButton"
+                class="primary"
+                type="submit"
+            ></button>
+
+        </form>
+
+
+        <div class="actions">
+
+            <button
+                id="nextLevelButton"
+                class="secondary"
+                onclick="nextClue()"
+                style="display:none"
+            ></button>
+
+
+            <button
+                id="newRoundButton"
+                class="primary"
+                onclick="newRound()"
+                style="display:none"
+            ></button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         PALABRAS ADIVINADAS
+    ================================================= -->
+
+    <div class="card solved-panel">
+
+        <h2 id="solvedTitle"></h2>
+
+        <div id="solvedWords"></div>
+
+    </div>
+
+
+    <div class="actions">
+
+        <button
+            id="changeConfigurationButton"
+            class="danger"
+            onclick="backToSetup()"
+        ></button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     FIN
+===================================================== -->
+
+<section
+    id="endScreen"
+    class="screen"
+>
+
+    <div class="card winner">
+
+        <h2 id="gameFinishedTitle"></h2>
+
+        <div id="finalScores"></div>
+
+        <br>
+
+        <button
+            id="playAgainButton"
+            class="primary"
+            onclick="backToSetup()"
+        ></button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     ARCHIVO DE DATOS
+===================================================== -->
+
+<script src="datos.js"></script>
+<script src="textos.js"></script>
+
+
+<script>
+
+/* =====================================================
+   ESTADO DEL JUEGO
+===================================================== */
+
+let numberOfPlayers = 1;
+
+let selectedCategories = [];
+
+let players = [];
+
+/*
+   currentPlayerIndex:
+   jugador que está intentando AHORA.
+*/
+let currentPlayerIndex = 0;
+
+/*
+   roundStarterIndex:
+   jugador que comenzó ESTA ronda.
+
+   Esta es la variable que faltaba en la
+   versión anterior.
+*/
+let roundStarterIndex = 0;
+
+let availableWords = [];
+
+let currentWord = null;
+
+let clueLevel = 1;
+
+let roundNumber = 0;
+
+let wordsPlayed = 0;
+
+/*
+   Jugadores que ya intentaron en el nivel
+   actual.
+*/
+let playerAttempts = new Set();
+
+/*
+   Categoría que seleccionó el jugador.
+*/
+let selectedAnswerCategory = null;
+
+/*
+   Palabras acertadas agrupadas por categoría.
+*/
+let solvedByCategory = {};
+
+
+/* =====================================================
+   ELEMENTOS HTML
+===================================================== */
+
+const setupScreen =
+    document.getElementById("setupScreen");
+
+const gameScreen =
+    document.getElementById("gameScreen");
+
+const endScreen =
+    document.getElementById("endScreen");
+
+const playerSelector =
+    document.getElementById("playerSelector");
+
+const playerDescription =
+    document.getElementById("playerDescription");
+
+const categoryContainer =
+    document.getElementById("categoryContainer");
+
+
+const selectedCount =
+    document.getElementById("selectedCount");
+
+const currentPlayer =
+    document.getElementById("currentPlayer");
+
+const roundNumberElement =
+    document.getElementById("roundNumber");
+
+const remainingWords =
+    document.getElementById("remainingWords");
+
+const scoreboard =
+    document.getElementById("scoreboard");
+
+const mainCategory =
+    document.getElementById("mainCategory");
+
+const mysteryWord =
+    document.getElementById("mysteryWord");
+
+const clue =
+    document.getElementById("clue");
+
+const subcategory =
+    document.getElementById("subcategory");
+
+const status =
+    document.getElementById("status");
+
+const guessForm =
+    document.getElementById("guessForm");
+
+const guessInput =
+    document.getElementById("guessInput");
+
+const nextLevelButton =
+    document.getElementById("nextLevelButton");
+
+const newRoundButton =
+    document.getElementById("newRoundButton");
+
+const categoryOptions =
+    document.getElementById("categoryOptions");
+
+const solvedWords =
+    document.getElementById("solvedWords");
+
+const gameTitle = document.getElementById("gameTitle");
+const gameSubtitle = document.getElementById("gameSubtitle");
+const playersTitle = document.getElementById("playersTitle");
+const categoriesTitle = document.getElementById("categoriesTitle");
+const categoriesInstruction = document.getElementById("categoriesInstruction");
+const selectedLabel = document.getElementById("selectedLabel");
+const randomCategoriesButton = document.getElementById("randomCategoriesButton");
+const startGameButton = document.getElementById("startGameButton");
+const turnLabel = document.getElementById("turnLabel");
+const roundLabel = document.getElementById("roundLabel");
+const remainingWordsLabel = document.getElementById("remainingWordsLabel");
+const categoryQuestionTitle = document.getElementById("categoryQuestionTitle");
+const checkAnswerButton = document.getElementById("checkAnswerButton");
+const solvedTitle = document.getElementById("solvedTitle");
+const changeConfigurationButton = document.getElementById("changeConfigurationButton");
+const gameFinishedTitle = document.getElementById("gameFinishedTitle");
+const playAgainButton = document.getElementById("playAgainButton");
+
+
+/* =====================================================
+   INICIO
+===================================================== */
+
+initialize();
+
+
+function initialize() {
+
+    renderStaticTexts();
+
+    createPlayerButtons();
+    renderCategories();
+
+}
+
+function renderStaticTexts() {
+
+    document.title = t("title");
+
+    gameTitle.textContent = t("title");
+    gameSubtitle.textContent = t("subtitle");
+
+    playersTitle.textContent = t("setupPlayersTitle");
+    categoriesTitle.textContent = t("setupCategoriesTitle");
+
+    selectedLabel.textContent = t("selected");
+    randomCategoriesButton.textContent = t("randomCategories");
+    startGameButton.textContent = t("startGame");
+
+    turnLabel.textContent = t("turnLabel");
+    roundLabel.textContent = t("round");
+    remainingWordsLabel.textContent = t("remainingWords");
+
+    categoryQuestionTitle.textContent = t("categoryQuestion");
+    guessInput.placeholder = t("writeWord");
+    checkAnswerButton.textContent = t("checkAnswer");
+
+    nextLevelButton.textContent = t("showHelp");
+    newRoundButton.textContent = t("newRound");
+
+    solvedTitle.textContent = t("solvedTitle");
+    changeConfigurationButton.textContent =
+        t("changeConfiguration");
+
+    gameFinishedTitle.textContent =
+        t("gameFinished");
+    playAgainButton.textContent =
+        t("playAgain");
+}
+
+
+/* =====================================================
+   JUGADORES
+===================================================== */
+
+function createPlayerButtons() {
+
+    playerSelector.innerHTML = "";
+
+    const maxPlayers =
+        Math.max(
+            1,
+            GAME_DATA.length - 1
+        );
+
+
+    for (
+        let i = 1;
+        i <= maxPlayers;
+        i++
+    ) {
+
+        const button =
+            document.createElement("button");
+
+        button.className =
+            "player-number";
+
+
+        if (i === numberOfPlayers) {
+
+            button.classList.add(
+                "selected"
+            );
+
+        }
+
+
+        button.textContent =
+            i === 1
+                ? t("onePlayer")
+                : t("manyPlayers", { n: i });
+
+
+        button.onclick = () => {
+
+            numberOfPlayers = i;
+
+            selectedCategories = [];
+
+            createPlayerButtons();
+
+            renderCategories();
+
+        };
+
+
+        playerSelector.appendChild(
+            button
+        );
+
+    }
+
+
+    playerDescription.textContent =
+        t("playerDescription", {
+            n: numberOfPlayers + 1
+        });
+
+}
+
+
+/* =====================================================
+   CATEGORÍAS DE CONFIGURACIÓN
+===================================================== */
+
+function renderCategories() {
+
+    categoryContainer.innerHTML = "";
+
+    const needed =
+        numberOfPlayers + 1;
+
+
+    GAME_DATA.forEach(
+        (category, index) => {
+
+            const card =
+                document.createElement("div");
+
+
+            card.className =
+                "category-card";
+
+
+            if (
+                selectedCategories.includes(
+                    index
+                )
+            ) {
+
+                card.classList.add(
+                    "selected"
+                );
+
+            }
+
+
+            if (
+                !selectedCategories.includes(
+                    index
+                ) &&
+                selectedCategories.length >= needed
+            ) {
+
+                card.classList.add(
+                    "disabled"
+                );
+
+            }
+
+
+            card.innerHTML = `
+
+                <h3>
+                    ${category.category}
+                </h3>
+
+                <div>
+                    ${category.fortext}
+                </div>
+
+                <div class="difficulty">
+                    Dificultad:
+                    ${"⭐".repeat(
+                        category.dificultad
+                    )}
+                </div>
+
+            `;
+
+
+            card.onclick = () => {
+
+                if (
+                    !selectedCategories.includes(
+                        index
+                    ) &&
+                    selectedCategories.length >= needed
+                ) {
+
+                    return;
+
+                }
+
+
+                toggleCategory(index);
+
+            };
+
+
+            categoryContainer.appendChild(
+                card
+            );
+
+        }
+    );
+
+
+    categoriesInstruction.innerHTML =
+        t("categoriesInstruction", {
+            n: needed
+        });
+
+    selectedCount.textContent =
+        selectedCategories.length;
+
+}
+
+
+/* =====================================================
+   SELECCIONAR / DESELECCIONAR CATEGORÍA
+===================================================== */
+
+function toggleCategory(index) {
+
+    const position =
+        selectedCategories.indexOf(index);
+
+
+    if (position >= 0) {
+
+        selectedCategories.splice(
+            position,
+            1
+        );
+
+    } else {
+
+        if (
+            selectedCategories.length <
+            numberOfPlayers + 1
+        ) {
+
+            selectedCategories.push(
+                index
+            );
+
+        }
+
+    }
+
+
+    renderCategories();
+
+}
+
+
+/* =====================================================
+   SELECCIÓN ALEATORIA
+===================================================== */
+
+function selectRandomCategories() {
+
+    const amount =
+        numberOfPlayers + 1;
+
+
+    const indexes =
+        GAME_DATA.map(
+            (_, index) => index
+        );
+
+
+    shuffle(indexes);
+
+
+    selectedCategories =
+        indexes.slice(
+            0,
+            amount
+        );
+
+
+    renderCategories();
+
+}
+
+
+/* =====================================================
+   CONSTRUIR LISTA DE PALABRAS
+===================================================== */
+
+function buildWordPool() {
+
+    availableWords = [];
+
+
+    selectedCategories.forEach(
+        categoryIndex => {
+
+            const mainCategory =
+                GAME_DATA[categoryIndex];
+
+
+            mainCategory.words.forEach(
+                subcategory => {
+
+                    subcategory.words.forEach(
+                        (word, index) => {
+
+                            availableWords.push({
+
+                                word: word,
+
+                                help:
+                                    subcategory.help[
+                                        index
+                                    ] || "",
+
+                                subcategory:
+                                    subcategory.category,
+
+                                mainCategory:
+                                    mainCategory.category,
+
+                                fortext:
+                                    mainCategory.fortext
+
+                            });
+
+                        }
+                    );
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   COMENZAR PARTIDA
+===================================================== */
+
+function startGame() {
+
+    const needed =
+        numberOfPlayers + 1;
+
+
+    if (
+        selectedCategories.length !== needed
+    ) {
+
+        alert(
+            t("selectCategories", {
+                n: needed
+            })
+        );
+
+        return;
+
+    }
+
+
+    players = [];
+
+
+    for (
+        let i = 0;
+        i < numberOfPlayers;
+        i++
+    ) {
+
+        players.push({
+
+            name:
+                `Jugador ${i + 1}`,
+
+            score: 0
+
+        });
+
+    }
+
+
+    /*
+       Al comenzar la partida, el jugador 1
+       comienza la primera ronda.
+    */
+
+    currentPlayerIndex = 0;
+
+    roundStarterIndex = 0;
+
+    roundNumber = 0;
+
+    wordsPlayed = 0;
+
+    playerAttempts.clear();
+
+    solvedByCategory = {};
+
+    buildWordPool();
+
+    createCategoryOptions();
+
+    renderSolvedWords();
+
+    showScreen(gameScreen);
+
+    startNewWord();
+
+}
+
+
+/* =====================================================
+   OPCIONES DE CATEGORÍA
+===================================================== */
+
+function createCategoryOptions() {
+
+    categoryOptions.innerHTML = "";
+
+    selectedAnswerCategory = null;
+
+
+    selectedCategories.forEach(
+        categoryIndex => {
+
+            const category =
+                GAME_DATA[categoryIndex];
+
+
+            const button =
+                document.createElement("button");
+
+
+            button.type = "button";
+
+            button.className =
+                "category-option";
+
+            button.textContent =
+                category.category;
+
+
+            button.onclick = () => {
+
+                selectAnswerCategory(
+                    category.category,
+                    button
+                );
+
+            };
+
+
+            categoryOptions.appendChild(
+                button
+            );
+
+        }
+    );
+
+}
+
+
+function selectAnswerCategory(
+    categoryName,
+    button
+) {
+
+    selectedAnswerCategory =
+        categoryName;
+
+
+    document
+        .querySelectorAll(
+            ".category-option"
+        )
+        .forEach(
+            element => {
+
+                element.classList.remove(
+                    "selected"
+                );
+
+            }
+        );
+
+
+    button.classList.add(
+        "selected"
+    );
+
+}
+
+
+/* =====================================================
+   NUEVA PALABRA / NUEVA RONDA
+===================================================== */
+
+function startNewWord() {
+
+    if (
+        availableWords.length === 0
+    ) {
+
+        finishGame();
+
+        return;
+
+    }
+
+
+    roundNumber++;
+
+    clueLevel = 1;
+
+    playerAttempts.clear();
+
+    selectedAnswerCategory = null;
+
+
+    /*
+       IMPORTANTE:
+
+       El jugador que empieza la ronda
+       se conserva en roundStarterIndex.
+
+       currentPlayerIndex es quien intenta
+       en este momento.
+    */
+
+    currentPlayerIndex =
+        roundStarterIndex;
+
+
+    const randomIndex =
+        Math.floor(
+            Math.random() *
+            availableWords.length
+        );
+
+
+    currentWord =
+        availableWords.splice(
+            randomIndex,
+            1
+        )[0];
+
+
+    wordsPlayed++;
+
+
+    renderWord();
+
+    updateScoreboard();
+
+
+    guessInput.value = "";
+
+    guessInput.disabled = false;
+
+    guessForm.style.display =
+        "block";
+
+
+    nextLevelButton.style.display =
+        "none";
+
+
+    newRoundButton.style.display =
+        "none";
+
+
+    status.textContent =
+        t("tryWordAndCategory", {
+            player: players[currentPlayerIndex].name
+        });
+
+
+    enableCategoryOptions();
+
+    guessInput.focus();
+
+}
+
+
+/* =====================================================
+   MOSTRAR PALABRA
+===================================================== */
+
+function renderWord() {
+
+    mainCategory.textContent =
+        t("hiddenCategory");
+
+
+    mysteryWord.textContent =
+        onlyConsonants(
+            currentWord.word
+        );
+
+
+    mysteryWord.classList.remove(
+        "revealed"
+    );
+
+
+    clue.style.display =
+        "none";
+
+
+    subcategory.style.display =
+        "none";
+
+
+    document.getElementById(
+        "level1"
+    ).className =
+        "level active";
+
+
+    document.getElementById(
+        "level2"
+    ).className =
+        "level";
+
+
+    document.getElementById(
+        "level3"
+    ).className =
+        "level";
+
+
+    roundNumberElement.textContent =
+        roundNumber;
+
+
+    remainingWords.textContent =
+        availableWords.length + 1;
+
+
+    createCategoryOptions();
+
+}
+
+
+/* =====================================================
+   CONVERTIR A CONSONANTES
+===================================================== */
+
+function onlyConsonants(text) {
+
+    return text
+
+        .normalize("NFD")
+
+        .replace(
+            /[\u0300-\u036f]/g,
+            ""
+        )
+
+        .replace(
+            /[AEIOUaeiou]/g,
+            ""
+        )
+
+        .replace(
+            /\s+/g,
+            " "
+        )
+
+        .trim()
+
+        .toUpperCase();
+
+}
+
+
+/* =====================================================
+   NORMALIZAR RESPUESTA
+===================================================== */
+
+function normalizeAnswer(text) {
+
+    return text
+
+        .normalize("NFD")
+
+        .replace(
+            /[\u0300-\u036f]/g,
+            ""
+        )
+
+        .toLowerCase()
+
+        .replace(
+            /[^\p{L}\p{N} ]/gu,
+            ""
+        )
+
+        .replace(
+            /\s+/g,
+            " "
+        )
+
+        .trim();
+
+}
+
+
+/* =====================================================
+   COMPROBAR RESPUESTA
+===================================================== */
+
+guessForm.addEventListener(
+    "submit",
+    function(event) {
+
+        event.preventDefault();
+
+
+        const answer =
+            normalizeAnswer(
+                guessInput.value
+            );
+
+
+        if (!answer) {
+
+            alert(t("writeAWord"));
+
+            return;
+
+        }
+
+
+        if (!selectedAnswerCategory) {
+
+            alert(t("selectCategory"));
+
+            return;
+
+        }
+
+
+        const wordCorrect =
+            normalizeAnswer(
+                currentWord.word
+            ) === answer;
+
+
+        const categoryCorrect =
+            selectedAnswerCategory ===
+            currentWord.mainCategory;
+
+
+        if (
+            wordCorrect &&
+            categoryCorrect
+        ) {
+
+            playerGuessedCorrectly();
+
+        } else {
+
+            playerFailed(
+                wordCorrect,
+                categoryCorrect
+            );
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   ACIERTO
+===================================================== */
+
+function playerGuessedCorrectly() {
+
+    const player =
+        players[currentPlayerIndex];
+
+
+    player.score++;
+
+
+    status.innerHTML = t("correct", {
+        player: player.name
+    });
+
+
+    mysteryWord.textContent =
+        currentWord.word;
+
+
+    mysteryWord.classList.add(
+        "revealed"
+    );
+
+
+    mainCategory.textContent =
+        currentWord.mainCategory;
+
+
+    guessInput.disabled = true;
+
+    guessForm.style.display =
+        "none";
+
+
+    disableCategoryOptions();
+
+
+    nextLevelButton.style.display =
+        "none";
+
+
+    newRoundButton.style.display =
+        "inline-block";
+
+
+    addSolvedWord(
+        currentWord
+    );
+
+
+    updateScoreboard();
+
+
+    /*
+       AQUÍ sí cambia el jugador que
+       comenzará la próxima ronda.
+
+       Ejemplo:
+
+       J1 acierta
+       ↓
+       próxima ronda comienza J2
+    */
+
+    roundStarterIndex =
+        (
+            currentPlayerIndex + 1
+        ) % players.length;
+
+}
+
+
+/* =====================================================
+   FALLO
+===================================================== */
+
+function playerFailed(
+    wordCorrect,
+    categoryCorrect
+) {
+
+    guessInput.value = "";
+
+
+    let feedback =
+        t("incorrect");
+
+
+    if (
+        wordCorrect &&
+        !categoryCorrect
+    ) {
+
+        feedback =
+            t("wordCorrectCategoryWrong");
+
+    }
+    else if (
+        !wordCorrect &&
+        categoryCorrect
+    ) {
+
+        feedback =
+            t("wordWrongCategoryCorrect");
+
+    }
+
+
+    /*
+       Registramos que este jugador
+       ya intentó en este nivel.
+    */
+
+    playerAttempts.add(
+        currentPlayerIndex
+    );
+
+
+    /*
+       Si todavía hay otro jugador que
+       no intentó, simplemente pasa a él.
+    */
+
+    if (
+        playerAttempts.size <
+        players.length
+    ) {
+
+        currentPlayerIndex =
+            (
+                currentPlayerIndex + 1
+            ) % players.length;
+
+
+        updateCurrentPlayer();
+
+
+        status.textContent =
+            t("nextPlayer", {
+                feedback: feedback,
+                player: players[currentPlayerIndex].name
+            });
+
+
+        selectedAnswerCategory = null;
+
+        clearCategorySelection();
+
+        guessInput.focus();
+
+        return;
+
+    }
+
+
+    /*
+       TODOS LOS JUGADORES FALLARON.
+
+       Ahora no cambiamos el jugador inicial.
+
+       Volvemos SIEMPRE a quien inició
+       esta ronda.
+    */
+
+    playerAttempts.clear();
+
+
+    currentPlayerIndex =
+        roundStarterIndex;
+
+
+    /*
+       Si todavía quedan pistas,
+       mostramos la siguiente.
+
+       El mismo jugador que comenzó
+       la ronda vuelve a intentar primero.
+    */
+
+    if (clueLevel < 3) {
+
+        nextClue();
+
+        return;
+
+    }
+
+
+    /*
+       Ya se mostraron todas las pistas.
+
+       Se revela la palabra y la categoría.
+    */
+
+    revealWord();
+
+}
+
+
+/* =====================================================
+   SIGUIENTE PISTA
+===================================================== */
+
+function nextClue() {
+
+    clueLevel++;
+
+    playerAttempts.clear();
+
+
+    /*
+       MUY IMPORTANTE:
+
+       El primer jugador de este nuevo nivel
+       sigue siendo el que inició la ronda.
+
+       NO se utiliza el último jugador que
+       había intentado.
+    */
+
+    currentPlayerIndex =
+        roundStarterIndex;
+
+
+    renderClue();
+
+
+    selectedAnswerCategory = null;
+
+    clearCategorySelection();
+
+
+    status.textContent =
+        t("newClue", {
+            player: players[roundStarterIndex].name
+        });
+
+
+    guessInput.focus();
+
+}
+
+
+/* =====================================================
+   MOSTRAR PISTA
+===================================================== */
+
+function renderClue() {
+
+    const level2 =
+        document.getElementById(
+            "level2"
+        );
+
+    const level3 =
+        document.getElementById(
+            "level3"
+        );
+
+
+    if (clueLevel >= 2) {
+
+        clue.style.display =
+            "block";
+
+
+        clue.innerHTML = `
+            <strong>${t("help")}</strong>
+            ${currentWord.help}
+        `;
+
+
+        level2.className =
+            "level active";
+
+    }
+
+
+    if (clueLevel >= 3) {
+
+        subcategory.style.display =
+            "block";
+
+
+        subcategory.textContent =
+            t("subcategory", {
+                category: currentWord.subcategory
+            });
+
+
+        level3.className =
+            "level active";
+
+    }
+
+}
+
+
+/* =====================================================
+   REVELAR PALABRA
+===================================================== */
+
+function revealWord() {
+
+    playerAttempts.clear();
+
+
+    mysteryWord.textContent =
+        currentWord.word;
+
+
+    mysteryWord.classList.add(
+        "revealed"
+    );
+
+
+    mainCategory.textContent =
+        currentWord.mainCategory;
+
+
+    clue.style.display =
+        "block";
+
+
+    clue.innerHTML = `
+        <strong>${t("help")}</strong>
+        ${currentWord.help}
+    `;
+
+
+    subcategory.style.display =
+        "block";
+
+
+    subcategory.textContent =
+        t("subcategory", {
+            category: currentWord.subcategory
+        });
+
+
+    status.innerHTML = `
+        ${t("wordWas")}
+        <strong>
+            ${currentWord.word}
+        </strong>
+
+        <br>
+
+        ${t("category")}
+        <strong>
+            ${currentWord.mainCategory}
+        </strong>
+    `;
+
+    // No hay una nueva oportunidad después de revelar la respuesta.
+    currentPlayerIndex = roundStarterIndex;
+
+    guessInput.disabled = true;
+
+    guessForm.style.display =
+        "none";
+
+    disableCategoryOptions();
+
+    selectedAnswerCategory = null;
+
+    clearCategorySelection();
+
+    newRoundButton.style.display =
+        "inline-block";
+
+}
+
+
+/* =====================================================
+   CATEGORÍAS DE RESPUESTA
+===================================================== */
+
+function clearCategorySelection() {
+
+    document
+        .querySelectorAll(
+            ".category-option"
+        )
+        .forEach(
+            button => {
+
+                button.classList.remove(
+                    "selected"
+                );
+
+            }
+        );
+
+}
+
+
+function disableCategoryOptions() {
+
+    document
+        .querySelectorAll(
+            ".category-option"
+        )
+        .forEach(
+            button => {
+
+                button.disabled = true;
+
+            }
+        );
+
+}
+
+
+function enableCategoryOptions() {
+
+    document
+        .querySelectorAll(
+            ".category-option"
+        )
+        .forEach(
+            button => {
+
+                button.disabled = false;
+
+            }
+        );
+
+}
+
+
+/* =====================================================
+   PALABRAS ADIVINADAS
+===================================================== */
+
+function addSolvedWord(word) {
+
+    if (
+        !solvedByCategory[
+            word.mainCategory
+        ]
+    ) {
+
+        solvedByCategory[
+            word.mainCategory
+        ] = [];
+
+    }
+
+
+    solvedByCategory[
+        word.mainCategory
+    ].push(word);
+
+
+    renderSolvedWords();
+
+}
+
+
+/* =====================================================
+   TABLA DE PALABRAS ADIVINADAS
+===================================================== */
+
+function renderSolvedWords() {
+
+    solvedWords.innerHTML = "";
+
+
+    /*
+       AHORA SE MUESTRAN SIEMPRE TODAS LAS
+       CATEGORÍAS SELECCIONADAS.
+
+       Aunque todavía no haya ninguna
+       palabra acertada.
+    */
+
+    selectedCategories.forEach(
+        categoryIndex => {
+
+            const category =
+                GAME_DATA[
+                    categoryIndex
+                ];
+
+
+            const words =
+                solvedByCategory[
+                    category.category
+                ] || [];
+
+
+            const categoryDiv =
+                document.createElement(
+                    "div"
+                );
+
+
+            categoryDiv.className =
+                "solved-category";
+
+
+            /*
+               Las palabras acertadas de
+               esta categoría.
+            */
+
+            let wordsHTML = "";
+
+
+            if (words.length === 0) {
+
+                wordsHTML = `
+                    <div class="empty-solved">
+                        ${t("noSolvedWords")}
+                    </div>
+                `;
+
+            }
+            else {
+
+                wordsHTML =
+                    words
+                        .map(
+                            word => `
+
+                                <div
+                                    class="solved-word"
+                                >
+                                    ✓
+                                    ${word.word}
+                                </div>
+
+                            `
+                        )
+                        .join("");
+
+            }
+
+
+            /*
+               CATEGORÍA
+               DESCRIPCIÓN
+               PALABRAS
+            */
+
+            categoryDiv.innerHTML = `
+
+                <div
+                    class="solved-category-title"
+                >
+                    ${category.category}
+                </div>
+
+
+                <div
+                    class="solved-category-description"
+                >
+                    ${category.fortext}
+                </div>
+
+
+                <div
+                    class="solved-list"
+                >
+                    ${wordsHTML}
+                </div>
+
+            `;
+
+
+            solvedWords.appendChild(
+                categoryDiv
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   MARCADOR
+===================================================== */
+
+function updateScoreboard() {
+
+    scoreboard.innerHTML = "";
+
+
+    players.forEach(
+        (player, index) => {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+
+            div.className =
+                "score";
+
+
+            if (
+                index === currentPlayerIndex
+            ) {
+
+                div.classList.add(
+                    "active-player"
+                );
+
+            }
+
+
+            div.innerHTML = `
+
+                <div class="score-name">
+                    ${player.name}
+                </div>
+
+                <div class="score-points">
+                    ${player.score}
+                </div>
+
+                <div>
+                    ${t("points")}
+                </div>
+
+            `;
+
+
+            scoreboard.appendChild(
+                div
+            );
+
+        }
+    );
+
+
+    currentPlayer.textContent =
+        players[currentPlayerIndex].name;
+
+}
+
+
+/* =====================================================
+   ACTUALIZAR JUGADOR
+===================================================== */
+
+function updateCurrentPlayer() {
+
+    currentPlayer.textContent =
+        players[currentPlayerIndex].name;
+
+
+    updateScoreboard();
+
+}
+
+
+/* =====================================================
+   NUEVA RONDA
+===================================================== */
+
+function newRound() {
+
+    mysteryWord.classList.remove(
+        "revealed"
+    );
+
+
+    selectedAnswerCategory = null;
+
+
+    /*
+       roundStarterIndex ya fue actualizado
+       cuando alguien acertó.
+
+       Por lo tanto startNewWord() hará que
+       ese jugador empiece la nueva ronda.
+    */
+
+    startNewWord();
+
+}
+
+
+/* =====================================================
+   FIN DEL JUEGO
+===================================================== */
+
+function finishGame() {
+
+    showScreen(
+        endScreen
+    );
+
+
+    const sortedPlayers =
+        [...players].sort(
+            (a, b) =>
+                b.score - a.score
+        );
+
+
+    let html = "";
+
+
+    sortedPlayers.forEach(
+        (player, index) => {
+
+            const medal =
+                index === 0
+                    ? "🏆"
+                    : index === 1
+                    ? "🥈"
+                    : index === 2
+                    ? "🥉"
+                    : "👤";
+
+
+            html += `
+
+                <div
+                    class="final-score"
+                >
+
+                    ${medal}
+
+                    <strong>
+                        ${player.name}
+                    </strong>
+
+                    :
+
+                    ${player.score}
+                    ${t("points")}
+
+                </div>
+
+            `;
+
+        }
+    );
+
+
+    document.getElementById(
+        "finalScores"
+    ).innerHTML = html;
+
+}
+
+
+/* =====================================================
+   NAVEGACIÓN
+===================================================== */
+
+function showScreen(screen) {
+
+    setupScreen.classList.remove(
+        "active"
+    );
+
+    gameScreen.classList.remove(
+        "active"
+    );
+
+    endScreen.classList.remove(
+        "active"
+    );
+
+
+    screen.classList.add(
+        "active"
+    );
+
+}
+
+
+function backToSetup() {
+
+    showScreen(
+        setupScreen
+    );
+
+
+    selectedCategories = [];
+
+    solvedByCategory = {};
+
+    players = [];
+
+    currentWord = null;
+
+    playerAttempts.clear();
+
+
+    renderCategories();
+
+}
+
+
+/* =====================================================
+   UTILIDADES
+===================================================== */
+
+function shuffle(array) {
+
+    for (
+        let i = array.length - 1;
+        i > 0;
+        i--
+    ) {
+
+        const j =
+            Math.floor(
+                Math.random() *
+                (i + 1)
+            );
+
+
+        [
+            array[i],
+            array[j]
+        ] = [
+            array[j],
+            array[i]
+        ];
+
+    }
+
+
+    return array;
+
+}
+
+</script>
+
+</body>
+
+</html>
