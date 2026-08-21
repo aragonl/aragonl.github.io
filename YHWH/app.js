@@ -1,8 +1,14 @@
 import { WORD_DATA } from "./palabras-es.js";
-import { TEXT, t } from "./texto-es.js";
-
+import { TEXT, t, EMOJI_MAP } from "./texto-es.js";
 const $ = (id) => document.getElementById(id);
 
+function replaceWithEmojis(text) {
+  // Solo reemplaza palabras exactas compuestas enteramente de MAYÚSCULAS
+  return text.replace(/\b[A-ZÁÉÍÓÚÜÑ]+\b/g, (match) => {
+    const norm = normalize(match);
+    return EMOJI_MAP[norm] || match;
+  });
+}
 const state = {
   players: 2,
   turnTime: 120,
@@ -138,6 +144,15 @@ function flattenData() {
 }
 
 function init() {
+
+  // app.js (Dentro de init())
+$("info-btn")?.addEventListener("click", () => {
+  $("rules-modal").classList.remove("hidden");
+});
+$("close-rules")?.addEventListener("click", () => {
+  $("rules-modal").classList.add("hidden");
+});
+  
   $("subtitle").textContent = TEXT.subtitle;
   $("start-title").textContent = t("startTitle");
   $("player-colors-title").textContent = t("playerColorsTitle");
@@ -259,16 +274,24 @@ function openPlayerColorPicker(playerIndex) {
 
 function renderCategorySelection() {
   const n = Number($("players").value) + 1;
-  const selected = new Set(state.selectedCategories);
   $("category-count").textContent = `${t("categoryCount")} (${n} necesarias)`;
   const container = $("categories");
   container.innerHTML = "";
+  
   WORD_DATA.forEach((cat, index) => {
+    const selectedOrderIndex = state.selectedCategories.indexOf(index);
+    const isSelected = selectedOrderIndex !== -1;
+    
     const card = document.createElement("button");
     card.type = "button";
-    card.className = `category-card ${selected.has(index) ? "selected" : ""}`;
-    card.style.setProperty("--category-bg", categoryColor(index));
-    if (selected.has(index)) card.style.setProperty("--selected-bg", categoryColor(index));
+    card.className = `category-card ${isSelected ? "selected" : ""}`;
+    
+    // Si está seleccionada, toma el color basado en el orden de selección (1º, 2º, 3º...)
+    if (isSelected) {
+      const assignedColor = categoryColor(selectedOrderIndex);
+      card.style.setProperty("--selected-bg", assignedColor);
+    }
+
     card.innerHTML = `<h4>${escapeHtml(cat.category)}</h4>
       <span class="badge">Dificultad ${escapeHtml(cat.dificultad)}</span>
       <p>${escapeHtml(cat.fortext)}</p>`;
@@ -421,17 +444,22 @@ function populateCategorySelect() {
   const current = state.selectedGuessCategory || "";
   container.innerHTML = "";
 
-  state.selectedCategories.forEach(index => {
+  // Iteramos sobre las categorías seleccionadas manteniendo su orden de selección
+  state.selectedCategories.forEach((index, selectedOrderIndex) => {
     const cat = WORD_DATA[index];
+    const assignedColor = categoryColor(selectedOrderIndex);
+    
     const isCorrectCategory = state.guessedCategory &&
       normalize(state.currentWord.mainCategory) === normalize(cat.category);
     const isSelected = !state.guessedCategory && normalize(current) === normalize(cat.category);
+    
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = `category-choice ${isSelected || isCorrectCategory ? "selected" : ""}`;
-    btn.style.background = categoryColor(index);
-    btn.style.setProperty("--category-choice-bg", categoryColor(index));
+    btn.style.background = assignedColor;
+    btn.style.setProperty("--category-choice-bg", assignedColor);
     btn.textContent = cat.category;
+    
     if (state.guessedCategory) btn.disabled = true;
     btn.addEventListener("click", () => {
       if (state.guessedCategory) return;
@@ -463,26 +491,37 @@ function renderScoreboard() {
     el.appendChild(d);
   });
 }
-
+  
 function renderClue() {
   const w = state.currentWord;
   const r = state.currentClueRound;
   const raw = String(w.word);
   const parts = splitAnswer(raw);
 
-  // Las partes en MAYÚSCULAS son las palabras que realmente hay que adivinar.
-  // Todo lo demás se muestra como pista, conservando sus vocales.
+    // Si no hay subcategoría asignada, forzar la ayuda de vocales desde el inicio/primer nivel de pista
+  const hasSubcategory = Boolean(w.subcategory && w.subcategory.trim() !== "");
+  if (!hasSubcategory && r < 2) {
+    r = 2; // Salta directamente al estado de revelación de vocales
+  }
+  
   let vowelCount = r >= 3 ? r - 2 : 0;
   let vowelBudget = vowelCount;
+  
   const displayedParts = parts.map(part => {
     const targetMatches = part.match(/[A-ZÁÉÍÓÚÜÑ]+(?:-[A-ZÁÉÍÓÚÜÑ]+)*/g);
     if (!targetMatches) return part;
 
     let remaining = part;
     targetMatches.forEach(target => {
-      const shown = vowelCount > 0 ? revealVowels(target, vowelBudget) : stripVowels(target);
-      vowelBudget = Math.max(0, vowelBudget - (target.match(/[AEIOUÁÉÍÓÚÜaeiouáéíóúü]/g) || []).length);
-      remaining = remaining.replace(target, shown);
+      // Si la palabra en mayúsculas coincide con el mapa de emojis, la reemplazamos
+      const targetNorm = normalize(target);
+      if (EMOJI_MAP[targetNorm]) {
+        remaining = remaining.replace(target, EMOJI_MAP[targetNorm]);
+      } else {
+        const shown = vowelCount > 0 ? revealVowels(target, vowelBudget) : stripVowels(target);
+        vowelBudget = Math.max(0, vowelBudget - (target.match(/[AEIOUÁÉÍÓÚÜaeiouáéíóúü]/g) || []).length);
+        remaining = remaining.replace(target, shown);
+      }
     });
     return remaining;
   });
@@ -778,12 +817,14 @@ function renderBoard() {
   container.innerHTML = "";
   const countEl = $("discovered-count");
   if (countEl) countEl.textContent = state.usedWordIds.size;
-  state.selectedCategories.forEach(index => {
+  
+  state.selectedCategories.forEach((index, selectedOrderIndex) => {
     const main = WORD_DATA[index];
+    const assignedColor = categoryColor(selectedOrderIndex);
+    
     const block = document.createElement("section");
     block.className = "board-category";
-    block.style.setProperty("--category-bg", categoryColor(index));
-
+    block.style.setProperty("--category-bg", assignedColor);
     const discovered = state.words.filter(w =>
       w.mainCategory === main.category && state.usedWordIds.has(w.id)
     );
