@@ -577,23 +577,29 @@ function submitGuess() {
   const wordDone = state.guessedWordParts.every(Boolean);
   const allDone = wordDone && state.guessedCategory;
 
-  if (allDone) {
-    showFeedback(`${t("correct")} +${formatPoints(awarded)} ${t("points")}.`, "good", "finish");
-    return;
-  }
+// Si adivinó TODO (Palabra completa y categoría)
+if (allDone) {
+  showFeedback(`${t("correct")} +${formatPoints(awarded)} ${t("points")}.`, "good", "finish");
+  return;
+}
 
-  if (newlyCorrectParts.length || categoryOK) {
-    const parts = [];
-    if (newlyCorrectParts.length) {
-      parts.push(answers.length > 1 && newlyCorrectParts.length < answers.length
-        ? t("wordPartialCorrect")
-        : t("wordBlockCorrect"));
-    }
-    if (categoryOK) parts.push(t("categoryCorrect"));
-    showFeedback(`${parts.join(" ")} +${formatPoints(awarded)} ${t("points")}.`, "partial", "partial");
-    return;
-  }
+// Si acertó SOLO la categoría pero NO la palabra
+if (categoryOK && !wordDone) {
+  showFeedback(`${t("incorrectWordCorrectCategory")} +${formatPoints(awarded)} ${t("points")}.`, "partial", "partial");
+  return;
+}
 
+// Si acertó alguna parte de la palabra
+if (newlyCorrectParts.length) {
+  const parts = [
+    answers.length > 1 && newlyCorrectParts.length < answers.length
+      ? t("wordPartialCorrect")
+      : t("wordBlockCorrect")
+  ];
+  if (state.guessedCategory) parts.push(t("categoryCorrect"));
+  showFeedback(`${parts.join(" ")} +${formatPoints(awarded)} ${t("points")}.`, "partial", "partial");
+  return;
+}
   showFeedback(t("incorrect"), "bad", "fail");
 }
 
