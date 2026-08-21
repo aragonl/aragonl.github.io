@@ -544,62 +544,68 @@ function submitGuess() {
   const answers = getAnswerParts(state.currentWord.word);
   const guessCategory = state.selectedGuessCategory || "";
 
-  // Cada componente se comprueba de forma independiente. La categoría
-  // jamás modifica la comparación de las palabras.
+  // 1. Verificar qué partes de la palabra se acertaron en ESTE intento
   const newlyCorrectParts = [];
   answers.forEach((answer, i) => {
     if (!state.guessedWordParts[i] && equivalent(guesses[i] ?? "", answer)) {
       newlyCorrectParts.push(i);
     }
   });
+
+  // 2. Verificar si la categoría ingresada es correcta
   const categoryOK = !state.guessedCategory &&
     normalize(guessCategory) !== "" &&
     normalize(guessCategory) === normalize(state.currentWord.mainCategory);
 
-  const previousGuessedCount = state.guessedWordParts.filter(Boolean).length;
+  // Guardar si la palabra YA estaba completamente adivinada de turnos anteriores
+  const wordAlreadyDone = state.guessedWordParts.every(Boolean);
+
+  // 3. Registrar los nuevos aciertos en el estado del juego
   newlyCorrectParts.forEach(i => { state.guessedWordParts[i] = true; });
   if (categoryOK) state.guessedCategory = true;
 
-  const basePoints = Math.max(1, 2 * (state.rTot - state.currentClueRound));
-  // El bloque de PALABRA y el bloque de CATEGORÍA valen cada uno la mitad
-  // del puntaje completo. Si hay &, el bloque de PALABRA se reparte por
-  // partes iguales entre las palabras y cada parte se paga una sola vez.
-  const blockPoints = basePoints / 2;
-  const wordPartPoints = blockPoints / answers.length;
-  let awarded = newlyCorrectParts.length * wordPartPoints;
-  if (categoryOK) awarded += blockPoints;
-
-  // Evita cualquier doble pago si el navegador conserva un estado parcial.
-  if (previousGuessedCount === answers.length) awarded -= newlyCorrectParts.length * wordPartPoints;
-  awarded = Math.max(0, awarded);
-  state.scores[state.currentPlayer] += awarded;
-
+  // 4. Determinar si la palabra COMPLETA está adivinada (después del intento)
   const wordDone = state.guessedWordParts.every(Boolean);
   const allDone = wordDone && state.guessedCategory;
 
-// Si adivinó TODO (Palabra completa y categoría)
-if (allDone) {
-  showFeedback(`${t("correct")} +${formatPoints(awarded)} ${t("points")}.`, "good", "finish");
-  return;
-}
+  // 5. Cálculo de puntos
+  const basePoints = Math.max(1, 2 * (state.rTot - state.currentClueRound));
+  const blockPoints = basePoints / 2;
+  const wordPartPoints = blockPoints / answers.length;
 
-// Si acertó SOLO la categoría pero NO la palabra
-if (categoryOK && !wordDone) {
-  showFeedback(`${t("incorrectWordCorrectCategory")} +${formatPoints(awarded)} ${t("points")}.`, "partial", "partial");
-  return;
-}
+  let awarded = newlyCorrectParts.length * wordPartPoints;
+  if (categoryOK) awarded += blockPoints;
 
-// Si acertó alguna parte de la palabra
-if (newlyCorrectParts.length) {
-  const parts = [
-    answers.length > 1 && newlyCorrectParts.length < answers.length
+  awarded = Math.max(0, awarded);
+  state.scores[state.currentPlayer] += awarded;
+
+  // --- CASOS DE RESPUESTA ---
+
+  // CASO A: ¡Todo perfecto! Palabra completa Y Categoría correcta
+  if (allDone) {
+    showFeedback(`${t("correct")} +${formatPoints(awarded)} ${t("points")}.`, "good", "finish");
+    return;
+  }
+
+  // CASO B: La categoría es CORRECTA, pero la palabra está INCORRECTA (o incompleta)
+  if (categoryOK && !wordDone) {
+    showFeedback(`Palabra incorrecta, categoría correcta. +${formatPoints(awarded)} ${t("points")}.`, "partial", "partial");
+    return;
+  }
+
+  // CASO C: Acertó la palabra (o parte de ella) pero la categoría fue incorrecta o aún no se adivina
+  if (newlyCorrectParts.length > 0) {
+    const parts = [];
+    parts.push(answers.length > 1 && newlyCorrectParts.length < answers.length
       ? t("wordPartialCorrect")
-      : t("wordBlockCorrect")
-  ];
-  if (state.guessedCategory) parts.push(t("categoryCorrect"));
-  showFeedback(`${parts.join(" ")} +${formatPoints(awarded)} ${t("points")}.`, "partial", "partial");
-  return;
-}
+      : t("wordBlockCorrect"));
+      
+    if (state.guessedCategory) parts.push(t("categoryCorrect"));
+    showFeedback(`${parts.join(" ")} +${formatPoints(awarded)} ${t("points")}.`, "partial", "partial");
+    return;
+  }
+
+  // CASO D: Erró tanto la palabra como la categoría
   showFeedback(t("incorrect"), "bad", "fail");
 }
 
