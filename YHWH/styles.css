@@ -17,6 +17,38 @@ body {
   color: var(--ink);
   background: var(--bg);
 }
+
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.info-btn {
+  background: transparent;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.info-btn:hover {
+  background: var(--accent);
+  color: white;
+}
+.rules-box {
+  text-align: left !important;
+  max-width: 500px;
+}
+
 .site-header {
   text-align: center;
   padding: 28px 16px 18px;
