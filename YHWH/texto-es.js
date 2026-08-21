@@ -22,6 +22,7 @@ export const TEXT = {
   pause: "Pausa",
   resume: "Continuar tiempo",
   correct: "¡Correcto! Palabra y categoría.",
+  incorrectWordCorrectCategory: "Palabra incorrecta, categoría correcta.",
   wordOnly: "Has acertado la palabra, pero no la categoría.",
   categoryOnly: "Has acertado la categoría, pero no la palabra.",
   wordOnlyPoints: "Has acertado la palabra. +{points} puntos.",
