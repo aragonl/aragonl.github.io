@@ -544,68 +544,72 @@ function submitGuess() {
   const answers = getAnswerParts(state.currentWord.word);
   const guessCategory = state.selectedGuessCategory || "";
 
-  // 1. Verificar qué partes de la palabra se acertaron en ESTE intento
+  // 1. Verificar qué partes de la palabra ingresadas son válidas y correctas
   const newlyCorrectParts = [];
   answers.forEach((answer, i) => {
-    if (!state.guessedWordParts[i] && equivalent(guesses[i] ?? "", answer)) {
+    const userGuess = (guesses[i] ?? "").trim();
+    // Solo si el usuario escribió algo y es equivalente a la respuesta
+    if (!state.guessedWordParts[i] && userGuess.length > 0 && equivalent(userGuess, answer)) {
       newlyCorrectParts.push(i);
     }
   });
 
-  // 2. Verificar si la categoría ingresada es correcta
+  // 2. Verificar si la categoría elegida es la correcta
   const categoryOK = !state.guessedCategory &&
     normalize(guessCategory) !== "" &&
     normalize(guessCategory) === normalize(state.currentWord.mainCategory);
 
-  // Guardar si la palabra YA estaba completamente adivinada de turnos anteriores
-  const wordAlreadyDone = state.guessedWordParts.every(Boolean);
-
-  // 3. Registrar los nuevos aciertos en el estado del juego
+  // 3. Registrar los aciertos verdaderos en el estado del juego
   newlyCorrectParts.forEach(i => { state.guessedWordParts[i] = true; });
   if (categoryOK) state.guessedCategory = true;
 
-  // 4. Determinar si la palabra COMPLETA está adivinada (después del intento)
-  const wordDone = state.guessedWordParts.every(Boolean);
+  // 4. Evaluar si la palabra COMPLETA y la CATEGORÍA están adivinadas
+  const wordDone = state.guessedWordParts.length === answers.length && state.guessedWordParts.every(Boolean);
   const allDone = wordDone && state.guessedCategory;
 
-  // 5. Cálculo de puntos
+  // 5. Cálculo del puntaje otorgado en este intento
   const basePoints = Math.max(1, 2 * (state.rTot - state.currentClueRound));
   const blockPoints = basePoints / 2;
   const wordPartPoints = blockPoints / answers.length;
 
-  let awarded = newlyCorrectParts.length * wordPartPoints;
-  if (categoryOK) awarded += blockPoints;
+  let awarded = 0;
+  if (newlyCorrectParts.length > 0) {
+    awarded += newlyCorrectParts.length * wordPartPoints;
+  }
+  if (categoryOK) {
+    awarded += blockPoints;
+  }
 
   awarded = Math.max(0, awarded);
   state.scores[state.currentPlayer] += awarded;
 
-  // --- CASOS DE RESPUESTA ---
+  // --- DETERMINAR CARTEL Y ACCIÓN DE CONTINUAR ---
 
-  // CASO A: ¡Todo perfecto! Palabra completa Y Categoría correcta
+  // CASO 1: Adivinó TODO (Palabra completa + Categoría)
   if (allDone) {
     showFeedback(`${t("correct")} +${formatPoints(awarded)} ${t("points")}.`, "good", "finish");
     return;
   }
 
-  // CASO B: La categoría es CORRECTA, pero la palabra está INCORRECTA (o incompleta)
+  // CASO 2: Categoría CORRECTA, pero Palabra INCORRECTA (o incompleta)
   if (categoryOK && !wordDone) {
     showFeedback(`Palabra incorrecta, categoría correcta. +${formatPoints(awarded)} ${t("points")}.`, "partial", "partial");
     return;
   }
 
-  // CASO C: Acertó la palabra (o parte de ella) pero la categoría fue incorrecta o aún no se adivina
+  // CASO 3: Palabra acertada (o parte de ella), pero la categoría fue incorrecta
   if (newlyCorrectParts.length > 0) {
     const parts = [];
     parts.push(answers.length > 1 && newlyCorrectParts.length < answers.length
       ? t("wordPartialCorrect")
       : t("wordBlockCorrect"));
-      
+
     if (state.guessedCategory) parts.push(t("categoryCorrect"));
     showFeedback(`${parts.join(" ")} +${formatPoints(awarded)} ${t("points")}.`, "partial", "partial");
     return;
   }
 
-  // CASO D: Erró tanto la palabra como la categoría
+  // CASO 4: Tanto la palabra como la categoría fueron incorrectas
   showFeedback(t("incorrect"), "bad", "fail");
 }
 
