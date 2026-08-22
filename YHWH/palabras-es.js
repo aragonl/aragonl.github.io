@@ -176,9 +176,9 @@ export const WORD_DATA = [
     fortext: "Los doce enviados",
     words: [
       {
-        category: "Primeros Llamados",
+        category: "Los primeros y los últimos Llamados",
         words: ["PEDRO & ANDRÉS", "SANTIAGO & JUAN", "PABLO & MATÍAS"],
-        help: ["pescadores de hombres", "hijos del trueno", "apóstol de los gentiles y el elegido"]
+        help: ["pescadores de hombres", "hijos del trueno", "apóstol de los gentiles y el elegido al ´azar´"]
       },
       {
         category: "Compañeros de Misión",
@@ -237,10 +237,9 @@ export const WORD_DATA = [
         help: ["tiempo común", "espera de la venida", "cuarenta días de preparación", "pasión, muerte y resurrección"]
       }
     ]
-  }
-];
+  },
   {
-    category: "Beatitudines",
+    category: "Beatitúdines",
     dificultad: 1,
     fortext: "Dichosos los que (tienen) …",
     words: [
