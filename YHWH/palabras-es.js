@@ -1,7 +1,248 @@
 // Datos del juego. Cada categoría principal debería tener 7 palabras.
 export const WORD_DATA = [
+  // Datos del juego formateados correctamente.
+export const WORD_DATA = [
   {
-    category: "Beatitudes",
+    category: "Sacramentos",
+    dificultad: 1,
+    fortext: "Signos eficaces de la gracia",
+    words: [
+      {
+        category: "Iniciación",
+        words: ["BAUTISMO", "EUCARISTÍA", "CONFIRMACIÓN"],
+        help: ["puerta de la fe", "cuerpo de Cristo", "sello del Espíritu"]
+      },
+      {
+        category: "Curación y comunión",
+        words: ["ORDEN sacerdotal", "UNCIÓN de los enfermos", "MATRIMONIO", "RECONCILIACIÓN"],
+        help: ["consagracion", "alivio corporal y espiritual", "unión conyugal", "perdón de los pecados"]
+      }
+    ]
+  },
+  {
+    category: "Génesis en 7 días",
+    dificultad: 1,
+    fortext: "El relato de la Creación",
+    words: [
+      {
+        category: "Creación de espacio-tiempo",
+        words: ["DÍA & NOCHE", "CIELO & SUELO", "TIERRA & MAR"],
+        help: ["separación de la luz", "firmamento", "superficie y aguas"]
+      },
+      {
+        category: "Creación de contenido",
+        words: ["SOL & LUNA", "AVES & MONSTRUOS", "REPTILES & HUMANOS", "DESCANSO & SANTIFICACIÓN"],
+        help: ["lumbreras", "cielo y mar", "tierra firme", "séptimo día"]
+      }
+    ]
+  },
+  {
+    category: "Ministerios",
+    dificultad: 2,
+    fortext: "Llamados y profesiones",
+    words: [
+      {
+        category: "Bautismales",
+        words: ["SACERDOTE", "PROFETA", "REY"],
+        help: ["ofrece el sacrificio", "anuncia la palabra", "sirve y gobierna"]
+      },
+      {
+        category: "Profesionales",
+        words: ["AGRICULTOR", "MÉDICO", "MAESTRO", "MILITAR"],
+        help: ["trabaja la tierra", "cura enfermos", "enseña", "defiende"]
+      }
+    ]
+  },
+  {
+    category: "Consejos",
+    dificultad: 2,
+    fortext: "Vías de perfección cristiana",
+    words: [
+      {
+        category: "Evangélicos",
+        words: ["CASTIDAD", "POBREZA", "OBEDIENCIA"],
+        help: ["amor puro", "desprendimiento", "escucha de la voluntad"]
+      },
+      {
+        category: "Cuaresmales",
+        words: ["LIMOSNA", "ORACIÓN", "AYUNO", "CONVERSIÓN"],
+        help: ["compartir bienes", "diálogo con Dios", "privación", "cambio de vida"]
+      }
+    ]
+  },
+  {
+    category: "Dones",
+    dificultad: 2,
+    fortext: "Regalos divinos",
+    words: [
+      {
+        category: "De la Trinidad",
+        words: ["SANTIFICACIÓN", "SALVACIÓN", "CREACIÓN"],
+        help: ["obra del Espíritu Santo", "obra del Hijo", "obra del Padre"]
+      },
+      {
+        category: "Del Espíritu Santo",
+        words: ["SABIDURÍA", "PIEDAD", "FORTALEZA", "TEMOR"],
+        help: ["gusto por lo divino", "afecto filial", "fuerza ante la prueba", "respeto a Dios"]
+      }
+    ]
+  },
+  {
+    category: "Virtudes",
+    dificultad: 1,
+    fortext: "Hábitos del bien",
+    words: [
+      {
+        category: "Teologales",
+        words: ["FE", "ESPERANZA", "CARIDAD"],
+        help: ["creer en Dios", "confiar en las promesas", "amar sobre todas las cosas"]
+      },
+      {
+        category: "Cardinales",
+        words: ["PRUDENCIA", "JUSTICIA", "TEMPLANZA", "FORTALEZA"],
+        help: ["discernimiento", "dar a cada uno lo suyo", "autocontrol", "fuerza interior"]
+      }
+    ]
+  },
+  {
+    category: "Obras de corazón espirituales",
+    dificultad: 2,
+    fortext: "Misericordia en la acción",
+    words: [
+      {
+        category: "Invisibles",
+        words: ["INTERCEDER", "CONSOLAR", "TOLERAR"],
+        help: ["orar por otros", "dar ánimo", "sufrir con paciencia"]
+      },
+      {
+        category: "Concretas",
+        words: ["ENSEÑAR", "PERDONAR", "ACONSEJAR", "CORREGIR"],
+        help: ["dar instrucción", "otorgar indulgencia", "orientar", "enmendar con amor"]
+      }
+    ]
+  },
+  {
+    category: "Pecados",
+    dificultad: 2,
+    fortext: "Faltas contra el amor y la virtud",
+    words: [
+      {
+        category: "Religiosos",
+        words: ["IDOLATRÍA", "PROFANACIÓN", "BLASFEMIA"],
+        help: ["adorar lo creado", "tratar desacertadamente lo sagrado", "palabra injuriosa"]
+      },
+      {
+        category: "Capitales",
+        words: ["GULA & AVARICIA", "ENVIDIA & IRA", "PEREZA & LUJURIA", "EGOCENTRISMO"],
+        help: ["descontrol alimentario y de posesión", "tristeza del bien ajeno y furia", "desgane y descontrol sensual", "exceso de yo"]
+      }
+    ]
+  },
+  {
+    category: "Yo Soy",
+    dificultad: 1,
+    fortext: "Jesús se auto definió con estos símbolos.",
+    words: [
+      {
+        category: "Entrada y Camino",
+        words: ["PUERTA", "CAMINO & VERDAD & VIDA", "LUZ del mundo"],
+        help: ["acceso a las ovejas", "la ruta completa", "ilumina en la oscuridad"]
+      },
+      {
+        category: "Vida y Guía",
+        words: ["PAN de vida", "VID verdadera", "BUEN pastor", "RESURRECCIÓN"],
+        help: ["alimento bajado del cielo", "la cepa y los sarmientos", "da la vida por sus ovejas", "y la vida"]
+      }
+    ]
+  },
+  {
+    category: "María",
+    dificultad: 1,
+    fortext: "Títulos y virtudes de la Virgen",
+    words: [
+      {
+        category: "Títulos Teológicos",
+        words: ["MADRE", "REINA", "ARCA de la alianza"],
+        help: ["de Dios y de la Iglesia", "del cielo", "continente de la palabra"]
+      },
+      {
+        category: "Atributos y Dogmas",
+        words: ["VIRGEN", "ESPOSA", "INMACULADA concepción", "DISCÍPULA"],
+        help: ["perpetua", "del Espíritu Santo", "sin pecado original", "primera seguidora"]
+      }
+    ]
+  },
+  {
+    category: "Apóstoles",
+    dificultad: 2,
+    fortext: "Los doce enviados",
+    words: [
+      {
+        category: "Primeros Llamados",
+        words: ["PEDRO & ANDRÉS", "SANTIAGO & JUAN", "PABLO & MATÍAS"],
+        help: ["pescadores de hombres", "hijos del trueno", "apóstol de los gentiles y el elegido"]
+      },
+      {
+        category: "Compañeros de Misión",
+        words: ["FELIPE & BARTOLOMÉ", "TOMÁS & MATEO", "SANTIAGO & TADEO", "SIMÓN & JUDAS"],
+        help: ["de Betsaida y Natanael", "el incrédulo y el publicano", "el menor y Lebeo", "el cananeo y el traidor"]
+      }
+    ]
+  },
+  {
+    category: "Mandamientos",
+    dificultad: 1,
+    fortext: "Leyes de la Alianza",
+    words: [
+      {
+        category: "En positivo",
+        words: ["AMAR a Dios", "SANTIFICAR", "RESPETAR"],
+        help: ["primer mandamiento", "las fiestas", "a padre y madre"]
+      },
+      {
+        category: "En negativo",
+        words: ["prohibido MATAR", "prohibido ROBAR", "prohibido ADULTERAR", "prohibido MENTIR"],
+        help: ["atentar contra la vida", "tomar lo ajeno", "romper la alianza matrimonial", "decir falso testimonio"]
+      }
+    ]
+  },
+  {
+    category: "Amor",
+    dificultad: 1,
+    fortext: "El mandamiento principal y sus manifestaciones",
+    words: [
+      {
+        category: "Mandamientos",
+        words: ["AMAR a DIOS", "AMAR al PRÓJIMO", "AMOR a UNO MISMO"],
+        help: ["con todo el corazón", "como a ti mismo", "baza de la autoestima justa"]
+      },
+      {
+        category: "Misericordia",
+        words: ["CARIDAD", "PERDÓN", "COMPASIÓN", "PIEDAD"],
+        help: ["amor en acción", "cancelar deudas", "padecer con el otro", "devoción de corazón"]
+      }
+    ]
+  },
+  {
+    category: "Tiempo Litúrgico",
+    dificultad: 1,
+    fortext: "El calendario de la Iglesia",
+    words: [
+      {
+        category: "Fiestas",
+        words: ["NAVIDAD", "PASCUA", "PENTECOSTÉS"],
+        help: ["nacimiento de Jesús", "resurrección del Señor", "venida del Espíritu Santo"]
+      },
+      {
+        category: "Preparación",
+        words: ["ORDINARIO", "ADVIENTO", "CUARESMA", "SEMANA Santa"],
+        help: ["tiempo común", "espera de la venida", "cuarenta días de preparación", "pasión, muerte y resurrección"]
+      }
+    ]
+  }
+];
+  {
+    category: "Beatitudines",
     dificultad: 1,
     fortext: "Dichosos los que (tienen) …",
     words: [
