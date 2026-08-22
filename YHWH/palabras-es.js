@@ -178,7 +178,7 @@ export const WORD_DATA = [
       {
         category: "Los primeros y los últimos Llamados",
         words: ["PEDRO & ANDRÉS", "SANTIAGO & JUAN", "PABLO & MATÍAS"],
-        help: ["pescadores de hombres", "hijos del trueno", "apóstol de los gentiles y el elegido al ´azar´"]
+        help: ["pescadores de hombres", "hijos del trueno", "apóstol de los gentiles y el elegido al azar"]
       },
       {
         category: "Compañeros de Misión",
