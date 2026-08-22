@@ -1,7 +1,5 @@
 // Datos del juego. Cada categoría principal debería tener 7 palabras.
 export const WORD_DATA = [
-  // Datos del juego formateados correctamente.
-export const WORD_DATA = [
   {
     category: "Sacramentos",
     dificultad: 1,
