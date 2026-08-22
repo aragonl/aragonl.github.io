@@ -25,7 +25,7 @@ export const WORD_DATA = [
       {
         category: "Creación de espacio-tiempo",
         words: ["DÍA & NOCHE", "CIELO & SUELO", "TIERRA & MAR"],
-        help: ["separación de la luz", "firmamento", "superficie y aguas"]
+        help: ["ciclo del tiempo", "firmamento", "superficie y aguas"]
       },
       {
         category: "Creación de contenido",
@@ -42,7 +42,7 @@ export const WORD_DATA = [
       {
         category: "Bautismales",
         words: ["SACERDOTE", "PROFETA", "REY"],
-        help: ["ofrece el sacrificio", "anuncia la palabra", "sirve y gobierna"]
+        help: ["mediador", "anuncia la palabra", "sirve y gobierna"]
       },
       {
         category: "Profesionales",
@@ -122,7 +122,7 @@ export const WORD_DATA = [
   {
     category: "Pecados",
     dificultad: 2,
-    fortext: "Faltas contra el amor y la virtud",
+    fortext: "Acciones e intenciones que nos alejan de Dios",
     words: [
       {
         category: "Religiosos",
@@ -144,7 +144,7 @@ export const WORD_DATA = [
       {
         category: "Entrada y Camino",
         words: ["PUERTA", "CAMINO & VERDAD & VIDA", "LUZ del mundo"],
-        help: ["acceso a las ovejas", "la ruta completa", "ilumina en la oscuridad"]
+        help: ["de acceso", "la ruta completa", "ilumina en la oscuridad"]
       },
       {
         category: "Vida y Guía",
@@ -160,13 +160,13 @@ export const WORD_DATA = [
     words: [
       {
         category: "Títulos Teológicos",
-        words: ["MADRE", "REINA", "ARCA de la alianza"],
-        help: ["de Dios y de la Iglesia", "del cielo", "continente de la palabra"]
+        words: ["VIRGEN & MADRE", "REINA", "ARCA de la alianza"],
+        help: ["de Dios y de la Iglesia", "de los hombres y de los Ángeles", "continente de la palabra"]
       },
       {
         category: "Atributos y Dogmas",
-        words: ["VIRGEN", "ESPOSA", "INMACULADA concepción", "DISCÍPULA"],
-        help: ["perpetua", "del Espíritu Santo", "sin pecado original", "primera seguidora"]
+        words: ["ASUNTA", "ESPOSA", "INMACULADA concepción", "DISCÍPULA"],
+        help: ["en cuerpo y alma", "del Espíritu Santo", "sin pecado original", "primera seguidora"]
       }
     ]
   },
@@ -211,8 +211,8 @@ export const WORD_DATA = [
     words: [
       {
         category: "Mandamientos",
-        words: ["AMAR a DIOS", "AMAR al PRÓJIMO", "AMOR a UNO MISMO"],
-        help: ["con todo el corazón", "como a ti mismo", "baza de la autoestima justa"]
+        words: ["amar a DIOS", "amar al PRÓJIMO", "amor PROPIO"],
+        help: ["con todo el corazón", "como a ti mismo", "autoestima y cuidado personal"]
       },
       {
         category: "Misericordia",
