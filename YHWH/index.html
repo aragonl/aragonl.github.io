@@ -9,23 +9,25 @@
 <body>
   <div class="container">
     <header class="site-header">
-      <div class="header-content">
+      <div class="header-top">
         <h1>YHWH</h1>
-        <button type="button" id="info-btn" class="info-btn" title="Información">ℹ️</button>
+        
+        <!-- Controles superiores derecha -->
+        <div class="header-actions">
+          <button type="button" id="info-btn" class="icon-btn" title="Información">ℹ️</button>
+          <button type="button" id="settings-btn" class="icon-btn" title="Configuración">⚙️</button>
+          
+          <select id="lang-select" class="lang-dropdown">
+            <option value="es">🇪🇸 ES</option>
+            <option value="it">🇮🇹 IT</option>
+            <option value="en">🇬🇧 EN</option>
+          </select>
+        </div>
       </div>
       <p id="subtitle" class="subtitle" data-i18n="subtitle"></p>
-      
-      <!-- Selector de idioma -->
-      <div class="language-selector" style="margin-top: 10px;">
-        <select id="lang-select">
-          <option value="es">🇪🇸 ES</option>
-          <option value="it">🇮🇹 IT</option>
-          <option value="en">🇬🇧 EN</option>
-        </select>
-      </div>
     </header>
 
-    <!-- Modal de Reglas -->
+    <!-- Modal de Información / Reglas -->
     <div id="rules-modal" class="feedback-modal hidden">
       <div class="feedback-box rules-box">
         <h3 data-i18n="rulesTitle"></h3>
@@ -39,46 +41,60 @@
       </div>
     </div>
 
-    <!-- Screen 1: Configuración / Inicio -->
+    <!-- Modal de Configuración Avanzada (⚙️) -->
+    <div id="settings-modal" class="feedback-modal hidden">
+      <div class="feedback-box">
+        <h3 data-i18n="settingsTitle">Ajustes</h3>
+        
+        <div class="settings-grid" style="text-align: left; margin: 15px 0;">
+          <label style="display: block; margin-bottom: 10px;">
+            <span id="time-label" data-i18n="time"></span>:
+            <input type="number" id="turn-time" min="10" max="120" value="120">
+          </label>
+
+          <label style="display: block; margin-bottom: 10px;">
+            <span id="rounds-label" data-i18n="rounds"></span>:
+            <input type="number" id="round-total" min="1" max="10" value="3">
+          </label>
+        </div>
+
+        <div class="player-color-selection">
+          <h4 id="player-colors-title" data-i18n="playerColorsTitle"></h4>
+          <div id="player-colors" class="player-colors"></div>
+          <div id="player-color-options" class="player-color-options"></div>
+        </div>
+
+        <div style="margin-top: 15px;">
+          <button type="button" id="random-categories" class="secondary" data-i18n="randomCategories"></button>
+        </div>
+
+        <button type="button" id="close-settings" class="primary" style="margin-top: 15px;" data-i18n="continue"></button>
+      </div>
+    </div>
+
+    <!-- Screen 1: Inicio -->
     <section id="screen-start" class="screen">
-      <h2 id="start-title" data-i18n="startTitle"></h2>
-      
-      <div class="settings-grid">
+      <!-- Unico ajuste visible de entrada -->
+      <div class="main-settings" style="margin-bottom: 15px;">
         <label>
-          <span id="players-label" data-i18n="players"></span>
+          <span id="players-label" data-i18n="players"></span>:
           <select id="players"></select>
         </label>
-        
-        <label>
-          <span id="time-label" data-i18n="time"></span>
-          <input type="number" id="turn-time" min="10" max="120" value="120">
-        </label>
-
-        <label>
-          <span id="rounds-label" data-i18n="rounds"></span>
-          <input type="number" id="round-total" min="1" max="10" value="3">
-        </label>
       </div>
 
-      <div class="player-color-selection">
-        <h3 id="player-colors-title" data-i18n="playerColorsTitle"></h3>
-        <div id="player-colors" class="player-colors"></div>
-        <div id="player-color-options" class="player-color-options"></div>
-      </div>
+      <!-- Botón Comenzar ubicado ARRIBA de las categorías -->
+      <button type="button" id="start-game" class="primary" style="width: 100%; font-size: 1.1rem; padding: 12px; margin-bottom: 15px;" data-i18n="startGame"></button>
 
       <div class="section-heading">
         <h3 id="categories-title" data-i18n="categoriesTitle"></h3>
-        <button type="button" id="random-categories" class="secondary" data-i18n="randomCategories"></button>
       </div>
       <p id="category-count" class="help-text" data-i18n="categoryCount"></p>
       
       <div id="categories" class="category-grid"></div>
-
       <p id="start-error" class="error"></p>
-      <button type="button" id="start-game" class="primary" style="width: 100%; font-size: 1.1rem; padding: 14px;" data-i18n="startGame"></button>
     </section>
 
-    <!-- Screen 2: Pantalla de Juego -->
+    <!-- Screen 2: Juego -->
     <main id="screen-game" class="screen hidden">
       <div class="game-top">
         <div>
@@ -110,7 +126,7 @@
       </div>
     </main>
 
-    <!-- Screen 3: Revelar Palabra (Ordenador / Tiempo agotado) -->
+    <!-- Screen 3: Revelar Palabra -->
     <section id="screen-reveal" class="screen hidden computer-reveal">
       <span class="computer-badge" id="computer-badge" data-i18n="computer"></span>
       <h2 id="reveal-title" data-i18n="specialRound"></h2>
@@ -144,7 +160,7 @@
       <button type="button" id="new-game" class="primary" style="margin-top: 15px;" data-i18n="newGame"></button>
     </section>
 
-    <!-- Modal de Feedback (Acierto / Error) -->
+    <!-- Modal Feedback -->
     <div id="feedback-modal" class="feedback-modal hidden">
       <div class="feedback-box">
         <p id="feedback-message" class="feedback"></p>
