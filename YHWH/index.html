@@ -10,14 +10,14 @@
   <div class="container">
     <header>
       <div class="header-title-container">
-        <h1 data-i18n="title">YHWH</h1>
-        <p id="subtitle" class="header-subtitle" data-i18n="subtitle">Adivina la Palabra</p>
+        <h1 data-i18n="title"></h1>
+        <p id="subtitle" class="header-subtitle" data-i18n="subtitle"></p>
       </div>
 
       <div class="header-actions">
         <select id="lang-select">
-          <option value="es">Español</option>
-          <option value="it">Italiano</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="it">🇮🇹 Italiano</option>
         </select>
         <button id="info-btn" class="icon-btn" title="Información">ℹ️</button>
         <button id="settings-btn" class="icon-btn" title="Configuración">⚙️</button>
@@ -26,45 +26,45 @@
 
     <!-- Pantalla de Configuración Inicial -->
     <section id="setup-screen" class="card">
-      <h2 data-i18n="setupTitle">Configuración de la Partida</h2>
+      <h2 data-i18n="setupTitle"></h2>
 
       <div class="form-group">
-        <label for="players-count" data-i18n="playersCountLabel">Cantidad de Jugadores:</label>
+        <label for="players-count" data-i18n="playersCountLabel"></label>
         <select id="players-count"></select>
       </div>
 
       <div class="form-group">
-        <label data-i18n="playerColorsLabel">Colores de los Jugadores:</label>
+        <label data-i18n="playerColorsLabel"></label>
         <div id="player-colors" class="colors-container"></div>
       </div>
 
       <div class="form-group">
-        <h3 data-i18n="selectCategoriesTitle">Seleccionar Categorías</h3>
-        <p id="category-count">Categorías seleccionadas: 0</p>
+        <h3 data-i18n="selectCategoriesTitle"></h3>
+        <p id="category-count"></p>
         <div id="categories" class="categories-grid"></div>
       </div>
 
-      <button id="start-btn" class="btn primary-btn" data-i18n="startGameBtn">Iniciar Juego</button>
+      <button id="start-btn" class="btn primary-btn" data-i18n="startGameBtn"></button>
     </section>
 
     <!-- Pantalla de Juego -->
     <section id="game-screen" class="card hidden">
       <div class="game-header">
-        <span id="current-round">Ronda 1/3</span>
+        <span id="current-round"></span>
         <span id="timer" class="timer-badge">120s</span>
       </div>
 
       <div id="scoreboard" class="scoreboard-container"></div>
 
       <div class="turn-box">
-        <h2 id="current-player">Turno del Jugador 1</h2>
-        <div id="clue-text" class="clue-box">Categoría y Pista</div>
+        <h2 id="current-player"></h2>
+        <div id="clue-text" class="clue-box"></div>
       </div>
 
       <div class="input-group">
-        <input type="text" id="guess-input" placeholder="Escribe tu respuesta..." data-i18n-placeholder="inputPlaceholder" />
-        <button id="submit-guess-btn" class="btn primary-btn" data-i18n="submitBtn">Enviar</button>
-        <button id="pass-turn-btn" class="btn secondary-btn" data-i18n="passBtn">Pasar</button>
+        <input type="text" id="guess-input" data-i18n-placeholder="inputPlaceholder" />
+        <button id="submit-guess-btn" class="btn primary-btn" data-i18n="submitBtn"></button>
+        <button id="pass-turn-btn" class="btn secondary-btn" data-i18n="passBtn"></button>
       </div>
     </section>
   </div>
@@ -72,25 +72,25 @@
   <!-- Modal de Información / Reglas -->
   <div id="info-modal" class="modal hidden">
     <div class="modal-content">
-      <h3 data-i18n="rulesTitle">Reglas e Información</h3>
-      <p data-i18n="rulesContent">Selecciona una o más categorías para comenzar. Cada jugador adivina en su turno.</p>
-      <button id="close-info-btn" class="btn secondary-btn" data-i18n="closeBtn">Cerrar</button>
+      <h3 data-i18n="rulesTitle"></h3>
+      <p data-i18n="rulesContent"></p>
+      <button id="close-info-btn" class="btn secondary-btn" data-i18n="closeBtn"></button>
     </div>
   </div>
 
   <!-- Modal de Configuración -->
   <div id="settings-modal" class="modal hidden">
     <div class="modal-content">
-      <h3 data-i18n="settingsTitle">Configuración</h3>
+      <h3 data-i18n="settingsTitle"></h3>
       <div class="form-group">
-        <label for="rounds-input" data-i18n="roundsLabel">Número de Rondas:</label>
+        <label for="rounds-input" data-i18n="roundsLabel"></label>
         <input type="number" id="rounds-input" min="1" max="10" value="3" />
       </div>
       <div class="form-group">
-        <label for="timer-input" data-i18n="timerLabel">Tiempo por turno (segundos):</label>
+        <label for="timer-input" data-i18n="timerLabel"></label>
         <input type="number" id="timer-input" min="10" max="300" value="120" />
       </div>
-      <button id="close-settings-btn" class="btn secondary-btn" data-i18n="closeBtn">Cerrar</button>
+      <button id="close-settings-btn" class="btn secondary-btn" data-i18n="closeBtn"></button>
     </div>
   </div>
 
