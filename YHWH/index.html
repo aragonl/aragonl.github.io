@@ -3,23 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Adivina la Palabra</title>
+  <title>YHWH</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
     <header>
       <div class="header-title-container">
-        <h1 data-i18n="title">Adivina la Palabra</h1>
-        <p id="subtitle" class="header-subtitle" data-i18n="subtitle">Juego de deducción por turnos</p>
+        <h1 data-i18n="title">YHWH</h1>
+        <p id="subtitle" class="header-subtitle" data-i18n="subtitle">Adivina la Palabra</p>
       </div>
 
       <div class="header-actions">
         <select id="lang-select">
           <option value="es">Español</option>
+          <option value="it">Italiano</option>
         </select>
-        <button id="info-btn" class="icon-btn" title="Reglas e Información">ℹ️</button>
+        <button id="info-btn" class="icon-btn" title="Información">ℹ️</button>
         <button id="settings-btn" class="icon-btn" title="Configuración">⚙️</button>
       </div>
     </header>
@@ -62,7 +62,7 @@
       </div>
 
       <div class="input-group">
-        <input type="text" id="guess-input" placeholder="Escribe tu respuesta aquí..." data-i18n-placeholder="inputPlaceholder" />
+        <input type="text" id="guess-input" placeholder="Escribe tu respuesta..." data-i18n-placeholder="inputPlaceholder" />
         <button id="submit-guess-btn" class="btn primary-btn" data-i18n="submitBtn">Enviar</button>
         <button id="pass-turn-btn" class="btn secondary-btn" data-i18n="passBtn">Pasar</button>
       </div>
@@ -72,10 +72,8 @@
   <!-- Modal de Información / Reglas -->
   <div id="info-modal" class="modal hidden">
     <div class="modal-content">
-      <h3 data-i18n="rulesTitle">Reglas del Juego</h3>
-      <p data-i18n="rulesContent">
-        Selecciona una o más categorías para comenzar. Cada jugador tendrá un turno para adivinar la palabra secreta a partir de las pistas facilitadas. Sumas puntos al adivinar correctamente en tu turno.
-      </p>
+      <h3 data-i18n="rulesTitle">Reglas e Información</h3>
+      <p data-i18n="rulesContent">Selecciona una o más categorías para comenzar. Cada jugador adivina en su turno.</p>
       <button id="close-info-btn" class="btn secondary-btn" data-i18n="closeBtn">Cerrar</button>
     </div>
   </div>
@@ -83,7 +81,7 @@
   <!-- Modal de Configuración -->
   <div id="settings-modal" class="modal hidden">
     <div class="modal-content">
-      <h3 data-i18n="settingsTitle">Configuración de Juego</h3>
+      <h3 data-i18n="settingsTitle">Configuración</h3>
       <div class="form-group">
         <label for="rounds-input" data-i18n="roundsLabel">Número de Rondas:</label>
         <input type="number" id="rounds-input" min="1" max="10" value="3" />
