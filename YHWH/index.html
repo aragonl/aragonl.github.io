@@ -1,123 +1,130 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YHWH</title>
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="site-header">
-    <div class="header-content">
-      <h1>YHWH</h1>
-      <button id="info-btn" class="info-btn" aria-label="Reglas del juego">ℹ</button>
+  <div class="container">
+    <header class="main-header">
+      <div class="header-titles">
+        <h1>YHWH</h1>
+        <p id="subtitle" class="subtitle" data-i18n="subtitle">Adivina la palabra agregando vocales.</p>
+      </div>
+      
+      <!-- Controles Superiores Derecha -->
+      <div class="top-controls">
+        <button type="button" id="btn-info" class="icon-btn" title="Información" aria-label="Información">ℹ️</button>
+        <div class="language-selector">
+          <select id="lang-select">
+            <option value="es">🇪🇸 ES</option>
+            <option value="it">🇮🇹 IT</option>
+            <option value="en">🇬🇧 EN</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- Modal de Información / Reglas -->
+    <div id="info-modal" class="modal hidden">
+      <div class="modal-content card">
+        <span id="close-info" class="close-btn">&times;</span>
+        <h3 data-i18n="rulesTitle">¿Cómo jugar?</h3>
+        <ul>
+          <li data-i18n="rule1">Descubre las palabras ocultas completando las vocales que faltan.</li>
+          <li data-i18n="rule2">Las palabras de 3 letras o menos deben coincidir exactamente.</li>
+          <li data-i18n="rule3">En cada turno, selecciona una categoría y escribe tu respuesta.</li>
+          <li data-i18n="rule4">Obtienes puntos extra si aciertas tanto la palabra como la categoría.</li>
+        </ul>
+      </div>
     </div>
-    <p id="subtitle"></p>
-  </header>
 
-  <main id="app">
-    <section id="screen-start" class="screen">
-      <h2 id="start-title"></h2>
-      <div class="settings-grid">
-        <label><span id="players-label"></span>
-          <select id="players"></select>
-        </label>
-        <label><span id="time-label"></span>
-          <input id="turn-time" type="number" min="10" max="3600" step="10" value="120">
-        </label>
-        <label><span id="rounds-label"></span>
-          <input id="round-total" type="number" min="1" max="20" value="3">
-        </label>
+    <!-- Setup Screen -->
+    <section id="setup-screen" class="card">
+      <!-- 1. Selección de Jugadores (Visible de entrada) -->
+      <div class="form-group inline-group">
+        <label for="players-count" data-i18n="players">Cantidad de jugadores</label>
+        <input type="number" id="players-count" min="1" max="4" value="2">
       </div>
 
-      <div class="player-color-selection">
-        <h3 id="player-colors-title">Colores de los jugadores</h3>
-        <div id="player-colors" class="player-colors"></div>
-        <div id="player-color-options" class="player-color-options"></div>
+      <!-- 2. Botón Comenzar + Configuración + Info (Arriba de las categorías) -->
+      <div class="action-bar-setup">
+        <button type="button" id="btn-start-game" class="btn-primary" data-i18n="startGame">Comenzar partida</button>
+        <button type="button" id="btn-config-toggle" class="icon-btn" title="Configuración">⚙️</button>
       </div>
 
-      <div class="category-selection">
-        <div class="section-heading">
-          <h3 id="categories-title"></h3>
-          <button id="random-categories" class="secondary"></button>
+      <!-- Panel de Configuración Oculto / Desplegable (Ruedita) -->
+      <div id="config-panel" class="config-panel hidden">
+        <h3 data-i18n="configTitle">Configuración de Partida</h3>
+        
+        <div class="form-group">
+          <label data-i18n="playerColorsTitle">Colores de los jugadores</label>
+          <div id="player-colors-container"></div>
         </div>
-        <p id="category-count"></p>
-        <div id="categories" class="category-grid"></div>
-      </div>
 
-      <button id="start-game" class="primary"></button>
-      <p id="start-error" class="error"></p>
-    </section>
-
-    <section id="screen-game" class="screen hidden">
-      <div class="game-top">
-        <div>
-          <div id="round-label"></div>
-          <div id="turn-label"></div>
+        <div class="form-group">
+          <label for="turn-time" data-i18n="time">Tiempo máximo por turno (segundos)</label>
+          <input type="number" id="turn-time" min="10" max="120" value="45">
         </div>
-        <div class="timer-controls"><div id="timer" class="timer">02:00</div><button id="pause-time" class="secondary"></button></div>
-      </div>
 
-      <div id="scoreboard" class="scoreboard"></div>
-
-      <div id="round-card" class="round-card">
-        <div id="clue-stage" class="clue-stage"></div>
-        <div id="attempt-status" class="attempt-status"></div>
-
-        <div class="guess-form">
-          <div id="guess-words" class="guess-words"></div>
-          <div id="guess-categories" class="guess-categories" role="group" aria-label="Categorías"></div>
-          <button id="submit-guess" class="primary">RESPONDER</button>
+        <div class="form-group">
+          <label for="max-rounds" data-i18n="rounds">Rondas de pistas antes de revelar</label>
+          <input type="number" id="max-rounds" min="1" max="10" value="3">
         </div>
-        <div id="feedback" class="feedback"></div>
-        <div id="feedback-modal" class="feedback-modal hidden" role="alertdialog" aria-live="assertive">
-          <div class="feedback-box">
-            <div id="feedback-message" class="feedback"></div>
-            <button id="feedback-continue" class="primary"></button>
+
+        <!-- Orden de Categorías -->
+        <div class="form-group">
+          <label data-i18n="sortCategoriesTitle">Ordenar categorías por:</label>
+          <div class="sort-buttons">
+            <button type="button" class="btn-sort active" data-sort="alphabetical" data-i18n="sortAlpha">Alfabético</button>
+            <button type="button" class="btn-sort" data-sort="difficulty" data-i18n="sortDifficulty">Dificultad</button>
+            <button type="button" class="btn-sort" data-sort="random" data-i18n="sortRandom">Al azar</button>
+            <button type="button" class="btn-sort" data-sort="tags" data-i18n="sortTags">Tags</button>
           </div>
         </div>
       </div>
 
-      <div class="board">
-        <h2 id="board-title"><span id="board-title-text">Palabras descubiertas</span><span id="discovered-count" class="small-counter">0</span></h2>
-        <div id="board-categories"></div>
+      <!-- 3. Selección de Categorías -->
+      <div class="form-group categories-section">
+        <label data-i18n="categoriesTitle">Categorías</label>
+        <p class="help-text" data-i18n="categoryCount">Selecciona las categorías que entrarán en juego.</p>
+        <div id="categories-container" class="checkbox-grid"></div>
       </div>
     </section>
 
-    <section id="screen-reveal" class="screen hidden">
-      <div class="computer-reveal">
-        <div class="computer-badge" id="computer-badge"></div>
-        <h2 id="reveal-title"></h2>
-        <div class="reveal-table">
-          <div class="reveal-row"><span class="reveal-label">Categoría / subcategoría</span><strong id="revealed-category"></strong></div>
-          <div class="reveal-row"><span class="reveal-label">Fortext</span><span id="reveal-fortext"></span></div>
-          <div class="reveal-row"><span class="reveal-label">Palabra</span><strong id="revealed-word" class="revealed-word"></strong></div>
-          <div class="reveal-row"><span class="reveal-label">Ayuda / sinónimo</span><span id="reveal-help"></span></div>
-        </div>
-        <button id="continue-reveal" class="primary"></button>
+    <!-- Game Screen -->
+    <main id="game-screen" class="hidden">
+      <div class="game-header">
+        <div class="info-badge"><span data-i18n="round">Ronda</span>: <span id="current-round">1</span></div>
+        <div class="info-badge"><span data-i18n="turn">Turno de</span>: <strong id="current-player">Jugador 1</strong></div>
+        <div class="info-badge timer"><span id="timer-display">45</span> <span data-i18n="seconds">seg</span></div>
       </div>
-    </section>
 
-    <section id="screen-end" class="screen hidden">
-      <h2 id="end-title"></h2>
-      <div id="final-scores"></div>
-      <button id="new-game" class="primary"></button>
-    </section>
-
-    <div id="rules-modal" class="feedback-modal hidden">
-      <div class="feedback-box rules-box">
-        <h2>Reglas del Juego</h2>
-        <div class="rules-content">
-          <p>1. Intenta adivinar la palabra o palabras objetivo y la categoría a la que pertenecen.</p>
-          <p>2. Si aciertas solo la categoría o parte de una palabra compuesta, sumarás puntos parciales y el turno pasará al siguiente jugador.</p>
-          <p>3. Las conectores y palabras en minúsculas son visibles; solo debes adivinar las palabras escritas en MAYÚSCULAS.</p>
-          <p>4. Con el avance de las rondas se irán revelando pistas y vocales.</p>
-        </div>
-        <button id="close-rules" class="primary">Cerrar</button>
+      <div class="actions-bar">
+        <button id="btn-pause" class="btn-secondary" data-i18n="pause">Pausa</button>
       </div>
-    </div>
-  </main>
 
-  <script type="module" src="./app.js"></script>
+      <section class="card">
+        <h2 data-i18n="boardTitle">Palabras descubiertas</h2>
+        <div id="board" class="board-grid"></div>
+      </section>
+
+      <section class="card input-section">
+        <form id="guess-form">
+          <div class="form-row">
+            <select id="category-select" required>
+              <option value="" disabled selected data-i18n="categoryPlaceholder">Elige una categoría</option>
+            </select>
+            <input type="text" id="guess-input" placeholder="Escribe la palabra" data-i18n-placeholder="guessPlaceholder" required>
+            <button type="submit" class="btn-primary" data-i18n="guess">RESPONDER</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="main.js"></script>
 </body>
 </html>
