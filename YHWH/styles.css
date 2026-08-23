@@ -1,74 +1,201 @@
-/* Cuadrícula de categorías seleccionables */
+:root {
+  --bg: #1e1e24;
+  --panel: #2b2d42;
+  --panel-light: #3d405b;
+  --text: #edf2f4;
+  --muted: #8d99ae;
+  --accent: #ef233c;
+  --accent2: #d90429;
+  --line: #4a4e69;
+  --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-family);
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 900px;
+  background: var(--panel);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Selección de categorías */
 .category-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 14px;
+  gap: 16px;
   margin: 16px 0 24px;
 }
 
-/* Tarjetas individuales de categoría */
 .category-card {
-  background: var(--panel);
+  background: var(--panel-light);
   border: 2px solid var(--line);
   border-radius: 12px;
-  padding: 14px;
+  padding: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
 .category-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--accent2);
+  transform: translateY(-3px);
+  border-color: var(--muted);
 }
 
 .category-card.selected {
-  border-width: 2px;
-  background: #f0ebf5;
+  background: #323554;
 }
 
 .category-card h4 {
-  margin: 0 0 6px 0;
+  margin: 0 0 8px 0;
   font-size: 1.1rem;
-  color: var(--ink);
 }
 
 .category-card .fortext {
   font-size: 0.85rem;
   color: var(--muted);
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
 }
 
 .category-card .badge {
   align-self: flex-start;
   font-size: 0.75rem;
-  padding: 3px 8px;
-  border-radius: 12px;
+  padding: 4px 8px;
+  border-radius: 20px;
   background: var(--line);
-  color: var(--ink);
+  color: var(--text);
 }
 
-/* Tarjetas de puntuación de jugadores */
+/* Formularios y Selectores */
+.setup-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+select, input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel-light);
+  color: var(--text);
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.color-pickers {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.color-picker {
+  -webkit-appearance: none;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Botones */
+button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: var(--accent2);
+}
+
+/* Marcadores */
 .scoreboard {
   display: flex;
   gap: 12px;
-  flex-wrap: wrap;
   margin-bottom: 20px;
 }
 
 .score-card {
   flex: 1;
-  min-width: 120px;
-  background: var(--panel);
-  border: 2px solid var(--line);
-  border-radius: 12px;
-  padding: 10px 14px;
+  background: var(--panel-light);
+  border-radius: 8px;
+  padding: 12px;
   text-align: center;
 }
 
 .score-card.active {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.player-name {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.player-score {
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+/* Área de Juego */
+.game-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: var(--panel-light);
+  border-radius: 8px;
+}
+
+.guess-box {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.guess-box input {
+  flex: 1;
 }
