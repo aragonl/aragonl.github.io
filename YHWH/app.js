@@ -1,5 +1,5 @@
-import { WORD_DATA } from "./palabras-es.js";
-import { TEXT, t, EMOJI_MAP } from "./texto-es.js";
+import { WORD_DATA } from "./palabras-it.js";
+import { TEXT, t, EMOJI_MAP } from "./texto-it.js";
 
 const $ = (id) => document.getElementById(id);
 
