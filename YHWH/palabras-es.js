@@ -155,18 +155,18 @@ export const WORD_DATA = [
   },
   {
     category: "María",
-    dificultad: 1,
+    dificultad: 3,
     fortext: "Títulos y virtudes",
     words: [
       {
-        category: "Títulos Teológicos",
-        words: ["VIRGEN & MADRE", "REINA", "ESPOSA"],
-        help: ["de Dios y de la Iglesia", "de los hombres y de los Ángeles", "del Espíritu Santo"]
+        category: "Dogmas",
+        words: ["MADRE & VIRGEN", "HIJA & INMACULADA", "ESPOSA & REINA"],
+        help: ["...de Dios Hijo & castísima", "...de Dios Padre & ...concepción ", "...del Espíritu Santo & ...de la creación"]
       },
       {
-        category: "Atributos y Dogmas",
-        words: ["ASUNTA", "ARCA", "INMACULADA", "DISCÍPULA"],
-        help: ["en cuerpo y alma", "de la alianza", "concepción", "primera seguidora"]
+        category: "Letanías",
+        words: ["ESPEJO & SEDE", "ARCA & CASA", "REFUGIO & PUERTA", "ROSA & ESTRELLA"],
+        help: ["...de justicia & de la sabiduría", "...de la alianza & ...de oro", "...de los pecadores & ...del cielo", "...mística & ...de la mañana"]
       }
     ]
   },
