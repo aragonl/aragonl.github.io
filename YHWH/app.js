@@ -30,9 +30,11 @@ const COLOR_PALETTE = [
 
 const $ = (id) => document.getElementById(id);
 
+// Corrección: Leer WORD_DATA en lugar de WORDS
 function getWordList() {
-  if (currentTextModule && currentTextModule.WORDS) {
-    return currentTextModule.WORDS;
+  if (currentTextModule) {
+    if (currentTextModule.WORD_DATA) return currentTextModule.WORD_DATA;
+    if (currentTextModule.WORDS) return currentTextModule.WORDS;
   }
   return [];
 }
@@ -56,7 +58,6 @@ async function switchLanguage(lang) {
       }
     });
 
-    // Forzar renderizado tras importar palabras del módulo
     updatePlayersDropdown();
     renderCategorySelection();
     renderGuessInputs();
@@ -87,8 +88,8 @@ function updatePlayersDropdown() {
     playersSelect.appendChild(opt);
   }
 
-  // Se mantiene 2 por defecto
-  playersSelect.value = currentVal <= maxPlayers ? currentVal : "2";
+  // Mantiene el valor inicial en 2
+  playersSelect.value = (Number(currentVal) <= maxPlayers) ? currentVal : "2";
   ensurePlayerColors();
 }
 
@@ -223,7 +224,6 @@ function renderGuessInputs() {
 }
 
 function startGame() {
-  // Si no seleccionó categorías, elegirlas al azar automáticamente
   if (state.selectedCategories.length === 0) {
     randomCategories();
   }
