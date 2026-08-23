@@ -14,7 +14,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 body {
@@ -32,7 +32,7 @@ body {
   max-width: 800px;
 }
 
-/* Header */
+/* Header con título y subtítulo a la izquierda, botones a la derecha */
 header {
   display: flex;
   justify-content: space-between;
@@ -100,7 +100,6 @@ select:focus, input:focus {
   border-color: var(--muted);
 }
 
-/* Tarjetas y Contenedores */
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -137,7 +136,6 @@ select:focus, input:focus {
   background: transparent;
 }
 
-/* Categorías */
 .categories-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -183,7 +181,6 @@ select:focus, input:focus {
   color: var(--text);
 }
 
-/* Botones generales */
 .btn {
   padding: 10px 20px;
   border-radius: var(--radius);
@@ -220,7 +217,6 @@ select:focus, input:focus {
   margin-top: 10px;
 }
 
-/* Pantalla de juego */
 .game-header {
   display: flex;
   justify-content: space-between;
