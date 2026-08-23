@@ -12,7 +12,7 @@
       <div class="header-top">
         <h1>YHWH</h1>
         
-        <!-- Controles superiores derecha -->
+        <!-- Controles compactos alineados a la derecha -->
         <div class="header-actions">
           <button type="button" id="info-btn" class="icon-btn" title="Información">ℹ️</button>
           <button type="button" id="settings-btn" class="icon-btn" title="Configuración">⚙️</button>
@@ -28,8 +28,8 @@
     </header>
 
     <!-- Modal de Información / Reglas -->
-    <div id="rules-modal" class="feedback-modal hidden">
-      <div class="feedback-box rules-box">
+    <div id="rules-modal" class="modal hidden">
+      <div class="modal-content">
         <h3 data-i18n="rulesTitle"></h3>
         <ul>
           <li data-i18n="rule1"></li>
@@ -42,17 +42,17 @@
     </div>
 
     <!-- Modal de Configuración Avanzada (⚙️) -->
-    <div id="settings-modal" class="feedback-modal hidden">
-      <div class="feedback-box">
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content">
         <h3 data-i18n="settingsTitle">Ajustes</h3>
         
-        <div class="settings-grid" style="text-align: left; margin: 15px 0;">
-          <label style="display: block; margin-bottom: 10px;">
+        <div class="settings-grid">
+          <label>
             <span id="time-label" data-i18n="time"></span>:
             <input type="number" id="turn-time" min="10" max="120" value="120">
           </label>
 
-          <label style="display: block; margin-bottom: 10px;">
+          <label>
             <span id="rounds-label" data-i18n="rounds"></span>:
             <input type="number" id="round-total" min="1" max="10" value="3">
           </label>
@@ -74,16 +74,14 @@
 
     <!-- Screen 1: Inicio -->
     <section id="screen-start" class="screen">
-      <!-- Unico ajuste visible de entrada -->
-      <div class="main-settings" style="margin-bottom: 15px;">
+      <div class="main-settings">
         <label>
           <span id="players-label" data-i18n="players"></span>:
           <select id="players"></select>
         </label>
       </div>
 
-      <!-- Botón Comenzar ubicado ARRIBA de las categorías -->
-      <button type="button" id="start-game" class="primary" style="width: 100%; font-size: 1.1rem; padding: 12px; margin-bottom: 15px;" data-i18n="startGame"></button>
+      <button type="button" id="start-game" class="primary start-btn" data-i18n="startGame"></button>
 
       <div class="section-heading">
         <h3 id="categories-title" data-i18n="categoriesTitle"></h3>
@@ -161,8 +159,8 @@
     </section>
 
     <!-- Modal Feedback -->
-    <div id="feedback-modal" class="feedback-modal hidden">
-      <div class="feedback-box">
+    <div id="feedback-modal" class="modal hidden">
+      <div class="modal-content">
         <p id="feedback-message" class="feedback"></p>
         <button type="button" id="feedback-continue" class="primary" data-i18n="continue"></button>
       </div>
