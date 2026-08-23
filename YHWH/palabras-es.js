@@ -71,7 +71,7 @@ export const WORD_DATA = [
   {
     category: "Dones",
     dificultad: 2,
-    fortext: "Regalos divinos",
+    fortext: "Regalos",
     words: [
       {
         category: "De la Trinidad",
@@ -88,12 +88,12 @@ export const WORD_DATA = [
   {
     category: "Virtudes",
     dificultad: 1,
-    fortext: "Hábitos del bien",
+    fortext: "Capacidades aprendibles que nos acercan a Dios",
     words: [
       {
         category: "Teologales",
         words: ["FE", "ESPERANZA", "CARIDAD"],
-        help: ["creer en Dios", "confiar en las promesas", "amar sobre todas las cosas"]
+        help: ["creer en Dios", "confiar en las promesas", "entregar la vida"]
       },
       {
         category: "Cardinales",
@@ -142,31 +142,31 @@ export const WORD_DATA = [
     fortext: "Jesús se auto definió con estos símbolos.",
     words: [
       {
-        category: "Entrada y Camino",
-        words: ["PUERTA", "CAMINO & VERDAD & VIDA", "LUZ del mundo"],
-        help: ["de acceso", "la ruta completa", "ilumina en la oscuridad"]
+        category: "",
+        words: ["RESURRECCIÓN", "LUZ","PASTOR"], 
+        help: ["gloriosa", "del mundo","el buen ..."]
       },
       {
-        category: "Vida y Guía",
-        words: ["PAN de vida", "VID verdadera", "BUEN pastor", "RESURRECCIÓN"],
-        help: ["alimento bajado del cielo", "la cepa y los sarmientos", "da la vida por sus ovejas", "y la vida"]
+        category: "Camino, Verdad y Vida",
+        words: ["PAN", "VID", "VIA & VERDAD & VIDA", "PUERTA"],
+        help: ["de vida", "verdadera", "", "del corral"]
       }
     ]
   },
   {
     category: "María",
     dificultad: 1,
-    fortext: "Títulos y virtudes de la Virgen",
+    fortext: "Títulos y virtudes",
     words: [
       {
         category: "Títulos Teológicos",
-        words: ["VIRGEN & MADRE", "REINA", "ARCA de la alianza"],
-        help: ["de Dios y de la Iglesia", "de los hombres y de los Ángeles", "continente de la palabra"]
+        words: ["VIRGEN & MADRE", "REINA", "ESPOSA"],
+        help: ["de Dios y de la Iglesia", "de los hombres y de los Ángeles", "del Espíritu Santo"]
       },
       {
         category: "Atributos y Dogmas",
-        words: ["ASUNTA", "ESPOSA", "INMACULADA concepción", "DISCÍPULA"],
-        help: ["en cuerpo y alma", "del Espíritu Santo", "sin pecado original", "primera seguidora"]
+        words: ["ASUNTA", "ARCA", "INMACULADA", "DISCÍPULA"],
+        help: ["en cuerpo y alma", "de la alianza", "concepción", "primera seguidora"]
       }
     ]
   },
@@ -183,7 +183,7 @@ export const WORD_DATA = [
       {
         category: "Compañeros de Misión",
         words: ["FELIPE & BARTOLOMÉ", "TOMÁS & MATEO", "SANTIAGO & TADEO", "SIMÓN & JUDAS"],
-        help: ["de Betsaida y Natanael", "el incrédulo y el publicano", "el menor y Lebeo", "el cananeo y el traidor"]
+        help: ["ven y verás", "el incrédulo y el publicano", "el menor y Judas", "el cananeo y el traidor"]
       }
     ]
   },
@@ -198,7 +198,7 @@ export const WORD_DATA = [
         help: ["primer mandamiento", "las fiestas", "a padre y madre"]
       },
       {
-        category: "En negativo",
+        category: "Prohibido",
         words: ["prohibido MATAR", "prohibido ROBAR", "prohibido ADULTERAR", "prohibido MENTIR"],
         help: ["atentar contra la vida", "tomar lo ajeno", "romper la alianza matrimonial", "decir falso testimonio"]
       }
