@@ -1,4 +1,3 @@
-// --- ESTADO GLOBAL ---
 let currentTextModule = null;
 
 let state = {
@@ -9,7 +8,6 @@ let state = {
   maxRounds: 3,
   turnTimeLimit: 120,
   
-  // Estado de partida
   currentPlayerIndex: 0,
   currentRound: 1,
   scores: [],
@@ -17,11 +15,10 @@ let state = {
   timeLeft: 0,
   isPaused: false,
   
-  // Estado de turno
   currentWord: null,
   currentWordIndex: -1,
   usedWords: new Set(),
-  clueStage: 1, // 1: Consonantes, 2: Comentario, 3: Sinónimo
+  clueStage: 1,
   attemptsInTurn: 0,
   pendingComputerReveal: false
 };
@@ -31,10 +28,8 @@ const COLOR_PALETTE = [
   '#9C27B0', '#E91E63', '#00BCD4', '#FF9800'
 ];
 
-// Auxiliar para seleccionar elementos del DOM
 const $ = (id) => document.getElementById(id);
 
-// Obtenedor de palabras según el módulo activo de idioma
 function getWordList() {
   if (currentTextModule && currentTextModule.WORDS) {
     return currentTextModule.WORDS;
@@ -42,13 +37,11 @@ function getWordList() {
   return [];
 }
 
-// --- TRADUCCIÓN E IDIOMA (i18n) ---
 async function switchLanguage(lang) {
   try {
     state.lang = lang;
     currentTextModule = await import(`./text-${lang}.js`);
     
-    // Traducir elementos estáticos del HTML usando data-i18n
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
       if (currentTextModule.t && currentTextModule.t(key)) {
@@ -63,11 +56,11 @@ async function switchLanguage(lang) {
       }
     });
 
-    // Re-renderizar opciones dinámicas si estamos en la pantalla de inicio
+    // Forzar renderizado tras importar palabras del módulo
+    updatePlayersDropdown();
     renderCategorySelection();
     renderGuessInputs();
 
-    // Actualizar interfaz dinámica si hay una partida en curso
     if (state.currentWord) {
       updateRoundUI();
       renderClue();
@@ -78,10 +71,28 @@ async function switchLanguage(lang) {
   }
 }
 
-// --- CONFIGURACIÓN E INICIALIZACIÓN ---
-function ensurePlayerColors() {
+function updatePlayersDropdown() {
+  const playersSelect = $("players");
+  if (!playersSelect) return;
+
   const words = getWordList();
-  const maxAllowed = Math.max(1, words.length - 1);
+  const maxPlayers = Math.max(2, words.length - 1);
+  const currentVal = playersSelect.value || "2";
+
+  playersSelect.innerHTML = "";
+  for (let i = 1; i <= maxPlayers; i++) {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = i;
+    playersSelect.appendChild(opt);
+  }
+
+  // Se mantiene 2 por defecto
+  playersSelect.value = currentVal <= maxPlayers ? currentVal : "2";
+  ensurePlayerColors();
+}
+
+function ensurePlayerColors() {
   const count = Number($("players")?.value || 2);
   state.playersCount = count;
 
@@ -104,6 +115,7 @@ function renderPlayerColorSelection() {
     wrapper.style.display = "flex";
     wrapper.style.alignItems = "center";
     wrapper.style.gap = "8px";
+    wrapper.style.margin = "4px 0";
 
     const label = document.createElement("span");
     label.textContent = `${currentTextModule ? currentTextModule.t('player') : 'Jugador'} ${index + 1}:`;
@@ -210,18 +222,15 @@ function renderGuessInputs() {
   catsContainer.innerHTML = `<select id="input-category">${catOptions}</select>`;
 }
 
-// --- LÓGICA DE JUEGO ---
 function startGame() {
-  const errEl = $("start-error");
+  // Si no seleccionó categorías, elegirlas al azar automáticamente
   if (state.selectedCategories.length === 0) {
-    if (errEl && currentTextModule) errEl.textContent = currentTextModule.t('errorNoCategories');
-    return;
+    randomCategories();
   }
-  if (errEl) errEl.textContent = "";
 
-  state.playersCount = Number($("players").value);
-  state.turnTimeLimit = Number($("turn-time").value);
-  state.maxRounds = Number($("round-total").value);
+  state.playersCount = Number($("players").value || 2);
+  state.turnTimeLimit = Number($("turn-time").value || 120);
+  state.maxRounds = Number($("round-total").value || 3);
   state.scores = new Array(state.playersCount).fill(0);
   state.currentPlayerIndex = 0;
   state.currentRound = 1;
@@ -433,12 +442,10 @@ function endGame() {
   });
 }
 
-// --- ARRANQUE DE LA APLICACIÓN ---
 async function init() {
   const langSelect = $("lang-select");
   const initialLang = langSelect ? langSelect.value : "es";
 
-  // Cargar las palabras y traducciones del idioma inicial
   await switchLanguage(initialLang);
 
   if (langSelect) {
@@ -447,6 +454,7 @@ async function init() {
     });
   }
 
+  // Modales
   $("info-btn")?.addEventListener("click", () => {
     $("rules-modal")?.classList.remove("hidden");
   });
@@ -454,30 +462,18 @@ async function init() {
     $("rules-modal")?.classList.add("hidden");
   });
 
-  const playersSelect = $("players");
-  if (playersSelect) {
-    playersSelect.innerHTML = "";
-    const words = getWordList();
-    const maxPlayers = Math.max(1, words.length - 1);
-    for (let i = 1; i <= maxPlayers; i++) {
-      const opt = document.createElement("option");
-      opt.value = i;
-      opt.textContent = i;
-      playersSelect.appendChild(opt);
-    }
-    playersSelect.value = Math.min(2, maxPlayers);
+  $("settings-btn")?.addEventListener("click", () => {
+    renderPlayerColorSelection();
+    $("settings-modal")?.classList.remove("hidden");
+  });
+  $("close-settings")?.addEventListener("click", () => {
+    $("settings-modal")?.classList.add("hidden");
+  });
 
-    playersSelect.addEventListener("change", () => {
-      ensurePlayerColors();
-      renderPlayerColorSelection();
-      renderCategorySelection();
-    });
-  }
-
-  ensurePlayerColors();
-  renderPlayerColorSelection();
-  renderCategorySelection();
-  renderGuessInputs();
+  $("players")?.addEventListener("change", () => {
+    ensurePlayerColors();
+    renderPlayerColorSelection();
+  });
 
   $("random-categories")?.addEventListener("click", randomCategories);
   $("start-game")?.addEventListener("click", startGame);
