@@ -28,9 +28,27 @@ const COLOR_PALETTE = [
 
 const $ = (id) => document.getElementById(id);
 
+// Función auxiliar robusta para obtener traducciones de tus archivos text-xx.js
+function getText(key) {
+  if (!currentTextModule) return null;
+  
+  // 1. Si el archivo exporta una función t(key)
+  if (typeof currentTextModule.t === 'function') {
+    const val = currentTextModule.t(key);
+    if (val && val !== key) return val;
+  }
+  // 2. Si exporta un objeto TEXTS o default
+  const dictionary = currentTextModule.TEXTS || currentTextModule.default || currentTextModule;
+  if (dictionary && dictionary[key]) {
+    return dictionary[key];
+  }
+  
+  return null;
+}
+
 function getWordList() {
-  if (currentWordModule && currentWordModule.WORD_DATA) {
-    return currentWordModule.WORD_DATA;
+  if (currentWordModule && (currentWordModule.WORD_DATA || currentWordModule.default)) {
+    return currentWordModule.WORD_DATA || currentWordModule.default;
   }
   if (window.WORD_DATA) {
     return window.WORD_DATA;
@@ -46,21 +64,24 @@ async function switchLanguage(lang) {
     try {
       currentWordModule = await import(`./palabras-${lang}.js`);
     } catch (e) {
-      console.warn(`No se encontró palabras-${lang}.js por separado.`);
+      console.warn(`No se pudo cargar palabras-${lang}.js por separado.`);
     }
 
-    // Traducción dinámica de la interfaz basada en data-i18n
+    // Traducción de elementos con data-i18n
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
-      if (currentTextModule && currentTextModule.t && currentTextModule.t(key)) {
-        el.textContent = currentTextModule.t(key);
+      const translation = getText(key);
+      if (translation) {
+        el.textContent = translation;
       }
     });
 
+    // Traducción de placeholders
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       const key = el.getAttribute('data-i18n-placeholder');
-      if (currentTextModule && currentTextModule.t && currentTextModule.t(key)) {
-        el.placeholder = currentTextModule.t(key);
+      const translation = getText(key);
+      if (translation) {
+        el.placeholder = translation;
       }
     });
 
@@ -68,7 +89,7 @@ async function switchLanguage(lang) {
     renderCategorySelection();
     updatePlayersSetup();
   } catch (err) {
-    console.error(`Error al cargar los textos e idiomas para ${lang}:`, err);
+    console.error(`Error al cargar los módulos para ${lang}:`, err);
   }
 }
 
@@ -80,7 +101,8 @@ function renderCategorySelection() {
   const mainCategories = getWordList();
 
   if (!mainCategories || mainCategories.length === 0) {
-    container.innerHTML = "<p>No se encontraron categorías disponibles.</p>";
+    const noCatText = getText('noCategories') || "No hay categorías disponibles.";
+    container.innerHTML = `<p>${noCatText}</p>`;
     return;
   }
 
@@ -97,10 +119,12 @@ function renderCategorySelection() {
       card.style.boxShadow = `0 0 8px ${assignedColor}66`;
     }
 
+    const diffLabel = getText('difficultyLabel') || 'Dificultad';
+
     card.innerHTML = `
       <h4>${catObj.category}</h4>
       ${catObj.fortext ? `<p class="fortext">${catObj.fortext}</p>` : ''}
-      ${catObj.dificultad ? `<span class="badge">Dificultad: ${catObj.dificultad}</span>` : ''}
+      ${catObj.dificultad ? `<span class="badge">${diffLabel}: ${catObj.dificultad}</span>` : ''}
     `;
 
     card.addEventListener("click", () => {
@@ -121,9 +145,7 @@ function renderCategorySelection() {
 function updateCategoryCount() {
   const el = $("category-count");
   if (el) {
-    const label = (currentTextModule && currentTextModule.t && currentTextModule.t('categoryCount')) 
-      ? currentTextModule.t('categoryCount') 
-      : 'Categorías seleccionadas';
+    const label = getText('categoryCount') || 'Categorías seleccionadas';
     el.textContent = `${label}: ${state.selectedCategories.length}`;
   }
 }
@@ -132,11 +154,13 @@ function updatePlayersSetup() {
   const select = $("players-count");
   if (!select) return;
 
+  const playerWord = getText('playerWord') || 'Jugadores';
+
   if (select.options.length === 0) {
     for (let i = 2; i <= 8; i++) {
       const opt = document.createElement("option");
       opt.value = i;
-      opt.textContent = `${i} Jugadores`;
+      opt.textContent = `${i} ${playerWord}`;
       select.appendChild(opt);
     }
   }
@@ -191,7 +215,8 @@ function setupModals() {
 
 function startGame() {
   if (state.selectedCategories.length === 0) {
-    alert("Por favor, selecciona al menos una categoría.");
+    const alertMsg = getText('selectCategoryAlert') || "Por favor, selecciona al menos una categoría.";
+    alert(alertMsg);
     return;
   }
 
@@ -212,12 +237,14 @@ function renderScoreboard() {
   if (!container) return;
   container.innerHTML = "";
 
+  const playerLabel = getText('playerLabel') || 'Jugador';
+
   for (let i = 0; i < state.playersCount; i++) {
     const card = document.createElement("div");
     card.className = `score-card ${i === state.currentPlayerIndex ? 'active' : ''}`;
     card.style.borderLeft = `6px solid ${state.playerColors[i]}`;
     card.innerHTML = `
-      <div class="player-name">Jugador ${i + 1}</div>
+      <div class="player-name">${playerLabel} ${i + 1}</div>
       <div class="player-score">${state.scores[i]} pts</div>
     `;
     container.appendChild(card);
@@ -241,7 +268,8 @@ function selectRandomWord() {
   });
 
   if (allWords.length === 0) {
-    alert("Se han agotado las palabras de las categorías seleccionadas.");
+    const alertWordsExhausted = getText('wordsExhaustedAlert') || "Se han agotado las palabras de las categorías seleccionadas.";
+    alert(alertWordsExhausted);
     return null;
   }
 
@@ -262,16 +290,23 @@ function nextTurn() {
 }
 
 function updateTurnUI() {
+  const playerLabel = getText('playerLabel') || 'Jugador';
+  const turnLabel = getText('turnLabel') || 'Turno del';
+
   if ($("current-player")) {
-    $("current-player").textContent = `Jugador ${state.currentPlayerIndex + 1}`;
+    $("current-player").textContent = `${turnLabel} ${playerLabel} ${state.currentPlayerIndex + 1}`;
     $("current-player").style.color = state.playerColors[state.currentPlayerIndex];
   }
   if ($("current-round")) {
-    const label = (currentTextModule && currentTextModule.t && currentTextModule.t('roundText')) ? currentTextModule.t('roundText') : 'Ronda';
-    $("current-round").textContent = `${label} ${state.currentRound}/${state.maxRounds}`;
+    const roundLabel = getText('roundText') || 'Ronda';
+    $("current-round").textContent = `${roundLabel} ${state.currentRound}/${state.maxRounds}`;
   }
   if ($("clue-text")) {
-    $("clue-text").textContent = `Categoría: ${state.currentWordObj.category} (${state.currentWordObj.subcategory}) - Longitud: ${state.currentWord.length} letras`;
+    const catLabel = getText('categoryLabel') || 'Categoría';
+    const lenLabel = getText('lengthLabel') || 'Longitud';
+    const lettersLabel = getText('lettersLabel') || 'letras';
+    
+    $("clue-text").textContent = `${catLabel}: ${state.currentWordObj.category} (${state.currentWordObj.subcategory}) - ${lenLabel}: ${state.currentWord.length} ${lettersLabel}`;
   }
 }
 
@@ -287,7 +322,8 @@ function startTimer() {
       updateTimerDisplay();
       if (state.timeLeft <= 0) {
         clearInterval(state.timerInterval);
-        alert("¡Tiempo agotado!");
+        const timeUpMsg = getText('timeUpAlert') || "¡Tiempo agotado!";
+        alert(timeUpMsg);
         advanceTurn();
       }
     }
@@ -308,12 +344,14 @@ function submitGuess() {
   if (!val) return;
 
   if (val === state.currentWord.toLowerCase()) {
-    alert(`¡Correcto! El Jugador ${state.currentPlayerIndex + 1} gana puntos.`);
+    const correctMsg = getText('correctGuessAlert') || "¡Correcto!";
+    alert(correctMsg);
     state.scores[state.currentPlayerIndex] += 10;
     input.value = "";
     advanceTurn();
   } else {
-    alert("Incorrecto. Intenta de nuevo.");
+    const wrongMsg = getText('wrongGuessAlert') || "Incorrecto. Intenta de nuevo.";
+    alert(wrongMsg);
     input.value = "";
   }
 }
@@ -327,7 +365,8 @@ function advanceTurn() {
   }
 
   if (state.currentRound > state.maxRounds) {
-    alert("¡Juego terminado!");
+    const gameOverMsg = getText('gameOverAlert') || "¡Juego terminado!";
+    alert(gameOverMsg);
     $("game-screen").classList.add("hidden");
     $("setup-screen").classList.remove("hidden");
   } else {
