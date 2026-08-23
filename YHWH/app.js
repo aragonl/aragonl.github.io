@@ -28,29 +28,34 @@ const COLOR_PALETTE = [
 
 const $ = (id) => document.getElementById(id);
 
-// Función auxiliar robusta para obtener traducciones de tus archivos text-xx.js
+// Inspector universal de textos para text-es.js y text-it.js
 function getText(key) {
   if (!currentTextModule) return null;
-  
-  // 1. Si el archivo exporta una función t(key)
+
+  // 1. Si existe una función t()
   if (typeof currentTextModule.t === 'function') {
-    const val = currentTextModule.t(key);
-    if (val && val !== key) return val;
+    const res = currentTextModule.t(key);
+    if (res && res !== key) return res;
   }
-  // 2. Si exporta un objeto TEXTS o default
-  const dictionary = currentTextModule.TEXTS || currentTextModule.default || currentTextModule;
-  if (dictionary && dictionary[key]) {
-    return dictionary[key];
+
+  // 2. Buscar dentro de objetos exportados (TEXTS, default o la raíz del módulo)
+  const target = currentTextModule.TEXTS || currentTextModule.default || currentTextModule;
+  if (target && typeof target === 'object' && target[key]) {
+    return target[key];
   }
-  
+
   return null;
 }
 
+// Inspector universal de lista de palabras para palabras-es.js / palabras-it.js
 function getWordList() {
-  if (currentWordModule && (currentWordModule.WORD_DATA || currentWordModule.default)) {
-    return currentWordModule.WORD_DATA || currentWordModule.default;
+  if (currentWordModule) {
+    if (Array.isArray(currentWordModule.WORD_DATA)) return currentWordModule.WORD_DATA;
+    if (Array.isArray(currentWordModule.default)) return currentWordModule.default;
+    if (Array.isArray(currentWordModule.categories)) return currentWordModule.categories;
+    if (Array.isArray(currentWordModule)) return currentWordModule;
   }
-  if (window.WORD_DATA) {
+  if (window.WORD_DATA && Array.isArray(window.WORD_DATA)) {
     return window.WORD_DATA;
   }
   return [];
@@ -59,29 +64,34 @@ function getWordList() {
 async function switchLanguage(lang) {
   try {
     state.lang = lang;
-    currentTextModule = await import(`./text-${lang}.js`);
     
+    try {
+      currentTextModule = await import(`./text-${lang}.js`);
+    } catch (e) {
+      console.error(`Error al importar text-${lang}.js:`, e);
+    }
+
     try {
       currentWordModule = await import(`./palabras-${lang}.js`);
     } catch (e) {
-      console.warn(`No se pudo cargar palabras-${lang}.js por separado.`);
+      console.warn(`No se encontró palabras-${lang}.js separado.`);
     }
 
-    // Traducción de elementos con data-i18n
+    // Traducción de elementos data-i18n
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
-      const translation = getText(key);
-      if (translation) {
-        el.textContent = translation;
+      const val = getText(key);
+      if (val) {
+        el.textContent = val;
       }
     });
 
     // Traducción de placeholders
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       const key = el.getAttribute('data-i18n-placeholder');
-      const translation = getText(key);
-      if (translation) {
-        el.placeholder = translation;
+      const val = getText(key);
+      if (val) {
+        el.placeholder = val;
       }
     });
 
@@ -89,7 +99,7 @@ async function switchLanguage(lang) {
     renderCategorySelection();
     updatePlayersSetup();
   } catch (err) {
-    console.error(`Error al cargar los módulos para ${lang}:`, err);
+    console.error(`Error general al cambiar idioma a ${lang}:`, err);
   }
 }
 
@@ -101,19 +111,20 @@ function renderCategorySelection() {
   const mainCategories = getWordList();
 
   if (!mainCategories || mainCategories.length === 0) {
-    const noCatText = getText('noCategories') || "No hay categorías disponibles.";
-    container.innerHTML = `<p>${noCatText}</p>`;
+    const noCatMsg = getText('noCategories') || "No se encontraron categorías disponibles.";
+    container.innerHTML = `<p>${noCatMsg}</p>`;
     return;
   }
 
   mainCategories.forEach((catObj) => {
+    const catName = catObj.category || catObj.name || catObj.nombre || "Sin Categoría";
     const card = document.createElement("div");
-    const isSelected = state.selectedCategories.includes(catObj.category);
+    const isSelected = state.selectedCategories.includes(catName);
     
     card.className = `category-card ${isSelected ? 'selected' : ''}`;
     
     if (isSelected) {
-      const orderIndex = state.selectedCategories.indexOf(catObj.category);
+      const orderIndex = state.selectedCategories.indexOf(catName);
       const assignedColor = COLOR_PALETTE[orderIndex % COLOR_PALETTE.length];
       card.style.borderColor = assignedColor;
       card.style.boxShadow = `0 0 8px ${assignedColor}66`;
@@ -122,16 +133,16 @@ function renderCategorySelection() {
     const diffLabel = getText('difficultyLabel') || 'Dificultad';
 
     card.innerHTML = `
-      <h4>${catObj.category}</h4>
+      <h4>${catName}</h4>
       ${catObj.fortext ? `<p class="fortext">${catObj.fortext}</p>` : ''}
       ${catObj.dificultad ? `<span class="badge">${diffLabel}: ${catObj.dificultad}</span>` : ''}
     `;
 
     card.addEventListener("click", () => {
-      if (state.selectedCategories.includes(catObj.category)) {
-        state.selectedCategories = state.selectedCategories.filter(c => c !== catObj.category);
+      if (state.selectedCategories.includes(catName)) {
+        state.selectedCategories = state.selectedCategories.filter(c => c !== catName);
       } else {
-        state.selectedCategories.push(catObj.category);
+        state.selectedCategories.push(catName);
       }
       renderCategorySelection();
     });
@@ -213,6 +224,54 @@ function setupModals() {
   }
 }
 
+function selectRandomWord() {
+  const rawList = getWordList();
+  const availableData = rawList.filter(cat => {
+    const catName = cat.category || cat.name || cat.nombre;
+    return state.selectedCategories.includes(catName);
+  });
+
+  let allWords = [];
+
+  availableData.forEach(cat => {
+    const catName = cat.category || cat.name || cat.nombre;
+    
+    // Si la categoría tiene subcategorías
+    if (Array.isArray(cat.subcategories)) {
+      cat.subcategories.forEach(sub => {
+        const subName = sub.name || sub.nombre || '';
+        const wordArr = sub.words || sub.palabras || [];
+        wordArr.forEach(w => {
+          const wordString = typeof w === 'string' ? w : (w.word || w.palabra);
+          if (wordString && !state.usedWords.has(wordString)) {
+            allWords.push({ word: wordString, category: catName, subcategory: subName });
+          }
+        });
+      });
+    } 
+    // Si la categoría tiene las palabras directamente
+    else if (Array.isArray(cat.words) || Array.isArray(cat.palabras)) {
+      const wordArr = cat.words || cat.palabras;
+      wordArr.forEach(w => {
+        const wordString = typeof w === 'string' ? w : (w.word || w.palabra);
+        if (wordString && !state.usedWords.has(wordString)) {
+          allWords.push({ word: wordString, category: catName, subcategory: '' });
+        }
+      });
+    }
+  });
+
+  if (allWords.length === 0) {
+    const alertWordsExhausted = getText('wordsExhaustedAlert') || "Se han agotado las palabras de las categorías seleccionadas.";
+    alert(alertWordsExhausted);
+    return null;
+  }
+
+  const selected = allWords[Math.floor(Math.random() * allWords.length)];
+  state.usedWords.add(selected.word);
+  return selected;
+}
+
 function startGame() {
   if (state.selectedCategories.length === 0) {
     const alertMsg = getText('selectCategoryAlert') || "Por favor, selecciona al menos una categoría.";
@@ -251,33 +310,6 @@ function renderScoreboard() {
   }
 }
 
-function selectRandomWord() {
-  const availableData = getWordList().filter(cat => state.selectedCategories.includes(cat.category));
-  let allWords = [];
-
-  availableData.forEach(cat => {
-    if (cat.subcategories) {
-      cat.subcategories.forEach(sub => {
-        sub.words.forEach(word => {
-          if (!state.usedWords.has(word)) {
-            allWords.push({ word, category: cat.category, subcategory: sub.name });
-          }
-        });
-      });
-    }
-  });
-
-  if (allWords.length === 0) {
-    const alertWordsExhausted = getText('wordsExhaustedAlert') || "Se han agotado las palabras de las categorías seleccionadas.";
-    alert(alertWordsExhausted);
-    return null;
-  }
-
-  const selected = allWords[Math.floor(Math.random() * allWords.length)];
-  state.usedWords.add(selected.word);
-  return selected;
-}
-
 function nextTurn() {
   state.currentWordObj = selectRandomWord();
   if (!state.currentWordObj) return;
@@ -305,8 +337,9 @@ function updateTurnUI() {
     const catLabel = getText('categoryLabel') || 'Categoría';
     const lenLabel = getText('lengthLabel') || 'Longitud';
     const lettersLabel = getText('lettersLabel') || 'letras';
+    const subText = state.currentWordObj.subcategory ? ` (${state.currentWordObj.subcategory})` : '';
     
-    $("clue-text").textContent = `${catLabel}: ${state.currentWordObj.category} (${state.currentWordObj.subcategory}) - ${lenLabel}: ${state.currentWord.length} ${lettersLabel}`;
+    $("clue-text").textContent = `${catLabel}: ${state.currentWordObj.category}${subText} - ${lenLabel}: ${state.currentWord.length} ${lettersLabel}`;
   }
 }
 
