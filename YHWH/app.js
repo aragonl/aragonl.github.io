@@ -30,11 +30,9 @@ const COLOR_PALETTE = [
 
 const $ = (id) => document.getElementById(id);
 
-// Corrección: Leer WORD_DATA en lugar de WORDS
 function getWordList() {
-  if (currentTextModule) {
-    if (currentTextModule.WORD_DATA) return currentTextModule.WORD_DATA;
-    if (currentTextModule.WORDS) return currentTextModule.WORDS;
+  if (currentTextModule && currentTextModule.WORD_DATA) {
+    return currentTextModule.WORD_DATA;
   }
   return [];
 }
@@ -78,7 +76,6 @@ function updatePlayersDropdown() {
 
   const words = getWordList();
   const maxPlayers = Math.max(2, words.length - 1);
-  const currentVal = playersSelect.value || "2";
 
   playersSelect.innerHTML = "";
   for (let i = 1; i <= maxPlayers; i++) {
@@ -88,8 +85,7 @@ function updatePlayersDropdown() {
     playersSelect.appendChild(opt);
   }
 
-  // Mantiene el valor inicial en 2
-  playersSelect.value = (Number(currentVal) <= maxPlayers) ? currentVal : "2";
+  playersSelect.value = "2";
   ensurePlayerColors();
 }
 
@@ -454,7 +450,6 @@ async function init() {
     });
   }
 
-  // Modales
   $("info-btn")?.addEventListener("click", () => {
     $("rules-modal")?.classList.remove("hidden");
   });
