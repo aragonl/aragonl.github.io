@@ -46,10 +46,10 @@ async function switchLanguage(lang) {
     try {
       currentWordModule = await import(`./palabras-${lang}.js`);
     } catch (e) {
-      console.warn("No se pudo cargar módulo separado de palabras, buscando global...");
+      console.warn(`No se encontró palabras-${lang}.js por separado.`);
     }
 
-    // Traducción de textos data-i18n
+    // Traducción dinámica de la interfaz basada en data-i18n
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
       if (currentTextModule && currentTextModule.t && currentTextModule.t(key)) {
@@ -64,10 +64,11 @@ async function switchLanguage(lang) {
       }
     });
 
+    state.selectedCategories = [];
     renderCategorySelection();
     updatePlayersSetup();
   } catch (err) {
-    console.error(`Error al cargar los módulos para ${lang}:`, err);
+    console.error(`Error al cargar los textos e idiomas para ${lang}:`, err);
   }
 }
 
@@ -173,12 +174,18 @@ function setupModals() {
   const settingsBtn = $("settings-btn");
   const settingsModal = $("settings-modal");
   const closeSettingsBtn = $("close-settings-btn");
+  const roundsInput = $("rounds-input");
+  const timerInput = $("timer-input");
 
   if (settingsBtn && settingsModal) {
     settingsBtn.onclick = () => settingsModal.classList.remove("hidden");
   }
   if (closeSettingsBtn && settingsModal) {
-    closeSettingsBtn.onclick = () => settingsModal.classList.add("hidden");
+    closeSettingsBtn.onclick = () => {
+      if (roundsInput) state.maxRounds = parseInt(roundsInput.value, 10) || 3;
+      if (timerInput) state.turnTimeLimit = parseInt(timerInput.value, 10) || 120;
+      settingsModal.classList.add("hidden");
+    };
   }
 }
 
