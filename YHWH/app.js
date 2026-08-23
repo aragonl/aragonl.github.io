@@ -23,11 +23,63 @@ const state = {
   selectedGuessCategory: "",
   guessedWordParts: [],
   guessedCategory: false,
-  remainingSeconds: 120,
+  remainingSeconds: 20,
   gameOver: false,
   playerColors: [],
   revealType: null
 };
+
+function processEmojiFormatting(text, emojiMap) {
+  const words = text.split(/\s+/);
+  return words.map((word, i) => {
+    const cleanWord = word.toUpperCase();
+    if (emojiMap[cleanWord]) {
+      // Verifica si tiene una palabra contigua en MAYÚSCULAS
+      const hasAdjacentUpper = 
+        (words[i - 1] && words[i - 1] === words[i - 1].toUpperCase()) ||
+        (words[i + 1] && words[i + 1] === words[i + 1].toUpperCase());
+      
+      if (hasAdjacentUpper) {
+        return emojiMap[cleanWord]; // Reemplaza por Emoji
+      }
+    }
+    return word; // Se mantiene la palabra original
+  }).join(" ");
+}
+
+function checkAnswer(input, targetWord) {
+  const cleanInput = input.trim().toUpperCase();
+  const cleanTarget = targetWord.trim().toUpperCase();
+
+  // Si la palabra tiene 3 o menos letras, requiere coincidencia exacta
+  if (cleanTarget.length <= 3) {
+    return cleanInput === cleanTarget;
+  }
+
+  // Lógica normal de consonantes/vocales para palabras de > 3 letras
+  return removeVowels(cleanInput) === removeVowels(cleanTarget);
+}
+let currentLangModule = null;
+
+async function switchLanguage(lang) {
+  // Carga dinámica del módulo seleccionado
+  currentLangModule = await import(`./text-${lang}.js`);
+  
+  // Re-aplica traducciones a la interfaz activa sin reiniciarla
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = currentLangModule.t(key);
+  });
+  
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = currentLangModule.t(key);
+  });
+}
+
+document.getElementById('lang-select').addEventListener('change', (e) => {
+  switchLanguage(e.target.value);
+});
 
 function normalize(s) {
   return String(s ?? "")
