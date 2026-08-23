@@ -1,310 +1,101 @@
-let currentTextModule = null;
-let currentWordModule = null; // Carga del módulo separado de palabras
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adivina la Palabra</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="header-title-container">
+        <h1 data-i18n="title">Adivina la Palabra</h1>
+        <p id="subtitle" class="header-subtitle" data-i18n="subtitle">Juego de deducción por turnos</p>
+      </div>
 
-let state = {
-  lang: 'es',
-  playersCount: 2,
-  playerColors: ['#FF5722', '#2196F3', '#4CAF50', '#FFEB3B', '#9C27B0', '#E91E63', '#00BCD4', '#FF9800'],
-  selectedCategories: [],
-  maxRounds: 3,
-  turnTimeLimit: 120,
-  
-  currentPlayerIndex: 0,
-  currentRound: 1,
-  scores: [],
-  timerInterval: null,
-  timeLeft: 0,
-  isPaused: false,
-  
-  currentWord: null,
-  currentWordObj: null,
-  usedWords: new Set(),
-  clueStage: 1,
-  attemptsInTurn: 0
-};
+      <div class="header-actions">
+        <select id="lang-select">
+          <option value="es">Español</option>
+        </select>
+        <button id="info-btn" class="icon-btn" title="Reglas e Información">ℹ️</button>
+        <button id="settings-btn" class="icon-btn" title="Configuración">⚙️</button>
+      </div>
+    </header>
 
-const COLOR_PALETTE = [
-  '#FF5722', '#2196F3', '#4CAF50', '#FFEB3B', 
-  '#9C27B0', '#E91E63', '#00BCD4', '#FF9800'
-];
+    <!-- Pantalla de Configuración Inicial -->
+    <section id="setup-screen" class="card">
+      <h2 data-i18n="setupTitle">Configuración de la Partida</h2>
 
-const $ = (id) => document.getElementById(id);
+      <div class="form-group">
+        <label for="players-count" data-i18n="playersCountLabel">Cantidad de Jugadores:</label>
+        <select id="players-count"></select>
+      </div>
 
-// Retorna WORD_DATA cargado desde palabras-{lang}.js
-function getWordList() {
-  if (currentWordModule && currentWordModule.WORD_DATA) {
-    return currentWordModule.WORD_DATA;
-  }
-  return [];
-}
+      <div class="form-group">
+        <label data-i18n="playerColorsLabel">Colores de los Jugadores:</label>
+        <div id="player-colors" class="colors-container"></div>
+      </div>
 
-async function switchLanguage(lang) {
-  try {
-    state.lang = lang;
-    // Importa tanto los textos traducidos como el archivo de palabras
-    currentTextModule = await import(`./text-${lang}.js`);
-    currentWordModule = await import(`./palabras-${lang}.js`);
-    
-    // Actualizar atributos i18n
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-      const key = el.getAttribute('data-i18n');
-      if (currentTextModule.t && currentTextModule.t(key)) {
-        el.textContent = currentTextModule.t(key);
-      }
-    });
+      <div class="form-group">
+        <h3 data-i18n="selectCategoriesTitle">Seleccionar Categorías</h3>
+        <p id="category-count">Categorías seleccionadas: 0</p>
+        <div id="categories" class="categories-grid"></div>
+      </div>
 
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-      const key = el.getAttribute('data-i18n-placeholder');
-      if (currentTextModule.t && currentTextModule.t(key)) {
-        el.placeholder = currentTextModule.t(key);
-      }
-    });
+      <button id="start-btn" class="btn primary-btn" data-i18n="startGameBtn">Iniciar Juego</button>
+    </section>
 
-    state.selectedCategories = [];
-    renderCategorySelection();
-    updatePlayersSetup();
-  } catch (err) {
-    console.error(`Error al cargar los módulos para ${lang}:`, err);
-  }
-}
+    <!-- Pantalla de Juego -->
+    <section id="game-screen" class="card hidden">
+      <div class="game-header">
+        <span id="current-round">Ronda 1/3</span>
+        <span id="timer" class="timer-badge">120s</span>
+      </div>
 
-function renderCategorySelection() {
-  const container = $("categories");
-  if (!container) return;
-  container.innerHTML = "";
+      <div id="scoreboard" class="scoreboard-container"></div>
 
-  const mainCategories = getWordList();
+      <div class="turn-box">
+        <h2 id="current-player">Turno del Jugador 1</h2>
+        <div id="clue-text" class="clue-box">Categoría y Pista</div>
+      </div>
 
-  if (!mainCategories || mainCategories.length === 0) {
-    container.innerHTML = "<p>No se encontraron categorías disponibles.</p>";
-    return;
-  }
+      <div class="input-group">
+        <input type="text" id="guess-input" placeholder="Escribe tu respuesta aquí..." data-i18n-placeholder="inputPlaceholder" />
+        <button id="submit-guess-btn" class="btn primary-btn" data-i18n="submitBtn">Enviar</button>
+        <button id="pass-turn-btn" class="btn secondary-btn" data-i18n="passBtn">Pasar</button>
+      </div>
+    </section>
+  </div>
 
-  mainCategories.forEach((catObj) => {
-    const card = document.createElement("div");
-    const isSelected = state.selectedCategories.includes(catObj.category);
-    
-    card.className = `category-card ${isSelected ? 'selected' : ''}`;
-    
-    if (isSelected) {
-      const orderIndex = state.selectedCategories.indexOf(catObj.category);
-      const assignedColor = COLOR_PALETTE[orderIndex % COLOR_PALETTE.length];
-      card.style.borderColor = assignedColor;
-      card.style.boxShadow = `0 0 8px ${assignedColor}66`;
-    }
+  <!-- Modal de Información / Reglas -->
+  <div id="info-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3 data-i18n="rulesTitle">Reglas del Juego</h3>
+      <p data-i18n="rulesContent">
+        Selecciona una o más categorías para comenzar. Cada jugador tendrá un turno para adivinar la palabra secreta a partir de las pistas facilitadas. Sumas puntos al adivinar correctamente en tu turno.
+      </p>
+      <button id="close-info-btn" class="btn secondary-btn" data-i18n="closeBtn">Cerrar</button>
+    </div>
+  </div>
 
-    card.innerHTML = `
-      <h4>${catObj.category}</h4>
-      ${catObj.fortext ? `<p class="fortext">${catObj.fortext}</p>` : ''}
-      ${catObj.dificultad ? `<span class="badge">Dificultad: ${catObj.dificultad}</span>` : ''}
-    `;
+  <!-- Modal de Configuración -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3 data-i18n="settingsTitle">Configuración de Juego</h3>
+      <div class="form-group">
+        <label for="rounds-input" data-i18n="roundsLabel">Número de Rondas:</label>
+        <input type="number" id="rounds-input" min="1" max="10" value="3" />
+      </div>
+      <div class="form-group">
+        <label for="timer-input" data-i18n="timerLabel">Tiempo por turno (segundos):</label>
+        <input type="number" id="timer-input" min="10" max="300" value="120" />
+      </div>
+      <button id="close-settings-btn" class="btn secondary-btn" data-i18n="closeBtn">Cerrar</button>
+    </div>
+  </div>
 
-    card.addEventListener("click", () => {
-      if (state.selectedCategories.includes(catObj.category)) {
-        state.selectedCategories = state.selectedCategories.filter(c => c !== catObj.category);
-      } else {
-        state.selectedCategories.push(catObj.category);
-      }
-      renderCategorySelection();
-    });
-
-    container.appendChild(card);
-  });
-
-  updateCategoryCount();
-}
-
-function updateCategoryCount() {
-  const el = $("category-count");
-  if (el && currentTextModule) {
-    el.textContent = `${currentTextModule.t('categoryCount') || 'Categorías seleccionadas'}: ${state.selectedCategories.length}`;
-  }
-}
-
-function updatePlayersSetup() {
-  const select = $("players-count");
-  if (!select) return;
-  state.playersCount = parseInt(select.value, 10) || 2;
-  
-  const colorsContainer = $("player-colors");
-  if (!colorsContainer) return;
-  colorsContainer.innerHTML = "";
-
-  for (let i = 0; i < state.playersCount; i++) {
-    const colorPicker = document.createElement("input");
-    colorPicker.type = "color";
-    colorPicker.value = state.playerColors[i] || COLOR_PALETTE[i % COLOR_PALETTE.length];
-    colorPicker.className = "color-picker";
-    colorPicker.addEventListener("change", (e) => {
-      state.playerColors[i] = e.target.value;
-    });
-    colorsContainer.appendChild(colorPicker);
-  }
-}
-
-function startGame() {
-  if (state.selectedCategories.length === 0) {
-    alert("Por favor, selecciona al menos una categoría.");
-    return;
-  }
-
-  state.scores = new Array(state.playersCount).fill(0);
-  state.currentPlayerIndex = 0;
-  state.currentRound = 1;
-  state.usedWords.clear();
-
-  $("setup-screen").classList.add("hidden");
-  $("game-screen").classList.remove("hidden");
-
-  renderScoreboard();
-  nextTurn();
-}
-
-function renderScoreboard() {
-  const container = $("scoreboard");
-  if (!container) return;
-  container.innerHTML = "";
-
-  for (let i = 0; i < state.playersCount; i++) {
-    const card = document.createElement("div");
-    card.className = `score-card ${i === state.currentPlayerIndex ? 'active' : ''}`;
-    card.style.borderLeft = `6px solid ${state.playerColors[i]}`;
-    card.innerHTML = `
-      <div class="player-name">Jugador ${i + 1}</div>
-      <div class="player-score">${state.scores[i]} pts</div>
-    `;
-    container.appendChild(card);
-  }
-}
-
-function selectRandomWord() {
-  const availableData = getWordList().filter(cat => state.selectedCategories.includes(cat.category));
-  let allWords = [];
-
-  availableData.forEach(cat => {
-    if (cat.subcategories) {
-      cat.subcategories.forEach(sub => {
-        sub.words.forEach(word => {
-          if (!state.usedWords.has(word)) {
-            allWords.push({ word, category: cat.category, subcategory: sub.name });
-          }
-        });
-      });
-    }
-  });
-
-  if (allWords.length === 0) {
-    alert("Se han agotado las palabras de las categorías seleccionadas.");
-    return null;
-  }
-
-  const selected = allWords[Math.floor(Math.random() * allWords.length)];
-  state.usedWords.add(selected.word);
-  return selected;
-}
-
-function nextTurn() {
-  state.currentWordObj = selectRandomWord();
-  if (!state.currentWordObj) return;
-
-  state.currentWord = state.currentWordObj.word;
-  state.clueStage = 1;
-  state.attemptsInTurn = 0;
-
-  renderScoreboard();
-  updateTurnUI();
-  startTimer();
-}
-
-function updateTurnUI() {
-  if ($("current-player")) {
-    $("current-player").textContent = `Jugador ${state.currentPlayerIndex + 1}`;
-    $("current-player").style.color = state.playerColors[state.currentPlayerIndex];
-  }
-  if ($("current-round")) {
-    $("current-round").textContent = `${currentTextModule.t('roundText') || 'Ronda'} ${state.currentRound}/${state.maxRounds}`;
-  }
-  if ($("clue-text")) {
-    $("clue-text").textContent = `Categoría: ${state.currentWordObj.category} (${state.currentWordObj.subcategory}) - Longitud: ${state.currentWord.length} letras`;
-  }
-}
-
-function startTimer() {
-  clearInterval(state.timerInterval);
-  state.timeLeft = state.turnTimeLimit;
-  state.isPaused = false;
-  updateTimerDisplay();
-
-  state.timerInterval = setInterval(() => {
-    if (!state.isPaused) {
-      state.timeLeft--;
-      updateTimerDisplay();
-      if (state.timeLeft <= 0) {
-        clearInterval(state.timerInterval);
-        alert("¡Tiempo agotado!");
-        advanceTurn();
-      }
-    }
-  }, 1000);
-}
-
-function updateTimerDisplay() {
-  if ($("timer")) {
-    $("timer").textContent = `${state.timeLeft}s`;
-  }
-}
-
-function submitGuess() {
-  const input = $("guess-input");
-  if (!input) return;
-
-  const val = input.value.trim().toLowerCase();
-  if (!val) return;
-
-  if (val === state.currentWord.toLowerCase()) {
-    alert(`¡Correcto! El Jugador ${state.currentPlayerIndex + 1} gana puntos.`);
-    state.scores[state.currentPlayerIndex] += 10;
-    input.value = "";
-    advanceTurn();
-  } else {
-    alert("Incorrecto. Intenta de nuevo.");
-    input.value = "";
-  }
-}
-
-function advanceTurn() {
-  clearInterval(state.timerInterval);
-  state.currentPlayerIndex++;
-  if (state.currentPlayerIndex >= state.playersCount) {
-    state.currentPlayerIndex = 0;
-    state.currentRound++;
-  }
-
-  if (state.currentRound > state.maxRounds) {
-    alert("¡Juego terminado!");
-    $("game-screen").classList.add("hidden");
-    $("setup-screen").classList.remove("hidden");
-  } else {
-    nextTurn();
-  }
-}
-
-document.addEventListener("DOMContentLoaded", async () => {
-  await switchLanguage('es');
-
-  if ($("players-count")) {
-    $("players-count").addEventListener("change", updatePlayersSetup);
-  }
-  if ($("start-btn")) {
-    $("start-btn").addEventListener("click", startGame);
-  }
-  if ($("submit-guess-btn")) {
-    $("submit-guess-btn").addEventListener("click", submitGuess);
-  }
-  if ($("pass-turn-btn")) {
-    $("pass-turn-btn").addEventListener("click", advanceTurn);
-  }
-  if ($("lang-select")) {
-    $("lang-select").addEventListener("change", (e) => switchLanguage(e.target.value));
-  }
-});
+  <script type="module" src="app.js"></script>
+</body>
+</html>
