@@ -587,37 +587,34 @@ function renderClue() {
   const raw = String(w.word);
   const parts = splitAnswer(raw);
 
+// --- CÓDIGO NUEVO ---
   let vowelCount = r >= 3 ? r - 2 : 0;
   let vowelBudget = vowelCount;
-  const displayedParts = parts.map(part => {
-    const targetMatches = part.match(/[A-ZÁÉÍÓÚÜÑ]+(?:-[A-ZÁÉÍÓÚÜÑ]+)*/g);
-    if (!targetMatches) return part;
 
+  const displayedParts = parts.map(part => {
     let remaining = part;
-    targetMatches.forEach(target => {
-      const targetNorm = normalize(target);
-      if (EMOJI_MAP && EMOJI_MAP[targetNorm]) {
-        remaining = remaining.replace(target, EMOJI_MAP[targetNorm]);
-      } else {
+
+    // 1. Reemplazar palabras en MINÚSCULAS si están en EMOJI_MAP
+    remaining = remaining.replace(/[a-záéíóúüñ]+/g, match => {
+      const norm = normalize(match);
+      if (EMOJI_MAP && EMOJI_MAP[norm]) {
+        return EMOJI_MAP[norm];
+      }
+      return match;
+    });
+
+    // 2. Procesar palabras en MAYÚSCULAS (solo vocales/consonantes, NUNCA emojis)
+    const targetMatches = remaining.match(/[A-ZÁÉÍÓÚÜÑ]+(?:-[A-ZÁÉÍÓÚÜÑ]+)*/g);
+    if (targetMatches) {
+      targetMatches.forEach(target => {
         const shown = vowelCount > 0 ? revealVowels(target, vowelBudget) : stripVowels(target);
         vowelBudget = Math.max(0, vowelBudget - (target.match(/[AEIOUÁÉÍÓÚÜaeiouáéíóúü]/g) || []).length);
         remaining = remaining.replace(target, shown);
-      }
-    });
+      });
+    }
+
     return remaining;
   });
-
-  if (r < 3) {
-    for (let i = 0; i < displayedParts.length; i++) {
-      const part = parts[i];
-      if (/[A-ZÁÉÍÓÚÜÑ]+/.test(part)) {
-        displayedParts[i] = part.replace(/[A-ZÁÉÍÓÚÜÑ]+(?:-[A-ZÁÉÍÓÚÜÑ]+)*/g, m => {
-          const norm = normalize(m);
-          return (EMOJI_MAP && EMOJI_MAP[norm]) ? EMOJI_MAP[norm] : stripVowels(m);
-        });
-      }
-    }
-  }
 
   const clues = [];
   if (r >= 1 && w.help) clues.push(`<span class="hint-attention">${escapeHtml(t("hintHelp", { help: w.help }))}</span>`);
