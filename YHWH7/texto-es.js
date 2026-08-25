@@ -1,8 +1,8 @@
 export const EMOJI_MAP = {
-  "CORAZON": "❤️",
-  "PROHIBIDO": "🚫",
-  "AMOR": "❤️",
-  "AMAR": "❤️"
+  "corazon": "❤️",
+  "prohibido": "🚫",
+  "amor": "❤️",
+  "amar": "❤️"
 };
 
 export const TEXT = {
