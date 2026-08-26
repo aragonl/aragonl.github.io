@@ -9,8 +9,8 @@ const COLOR_PALETTE = ["#8a89c0", "#729b79", "#bac7a7", "#e3b5a4", "#cda5b6"];
 
 const state = {
   lang: "es",
-  text: textES,
-  emojiMap: EMOJI_MAP_ES,
+  text: textES || {},
+  emojiMap: EMOJI_MAP_ES || {},
   selectedCategoryIds: new Set(),
   activeCategories: [],
   targetCount: 3,
@@ -175,14 +175,14 @@ function shuffle(array) {
 function loadLanguage(lang) {
   state.lang = lang;
   if (lang === "it") {
-    state.text = textIT;
-    state.emojiMap = EMOJI_MAP_IT;
+    state.text = textIT || {};
+    state.emojiMap = EMOJI_MAP_IT || {};
   } else if (lang === "en") {
-    state.text = textEN;
-    state.emojiMap = EMOJI_MAP_EN;
+    state.text = textEN || {};
+    state.emojiMap = EMOJI_MAP_EN || {};
   } else {
-    state.text = textES;
-    state.emojiMap = EMOJI_MAP_ES;
+    state.text = textES || {};
+    state.emojiMap = EMOJI_MAP_ES || {};
   }
   updateUIStaticText();
   renderCategorySelection();
@@ -191,19 +191,19 @@ function loadLanguage(lang) {
 
 function updateUIStaticText() {
   const t = state.text;
-  dom.subtitle.textContent = t.subtitle;
-  dom.startGameBtn.textContent = t.startGame;
-  dom.randomCategoriesBtn.textContent = t.randomCategories;
-  dom.pauseTimeBtn.textContent = t.pause;
-  dom.boardTitleText.textContent = t.boardTitle;
-  dom.newGameBtn.textContent = t.newGame;
-  dom.timeLabel.textContent = t.turnTimeLabel;
-  dom.roundsLabel.textContent = t.roundsLabel;
-  dom.playersLabel.textContent = t.playersLabel;
-  dom.categoriesTitle.textContent = t.selectCategories;
-  dom.playerColorsTitle.textContent = t.playerNamesTitle;
-  dom.continueRevealBtn.textContent = t.continue;
-  dom.feedbackContinue.textContent = t.continue;
+  if (dom.subtitle) dom.subtitle.textContent = t.subtitle || "Juego de palabras";
+  if (dom.startGameBtn) dom.startGameBtn.textContent = t.startGame || "INICIAR JUEGO";
+  if (dom.randomCategoriesBtn) dom.randomCategoriesBtn.textContent = t.randomCategories || "Categorías aleatorias";
+  if (dom.pauseTimeBtn) dom.pauseTimeBtn.textContent = t.pause || "Pausar";
+  if (dom.boardTitleText) dom.boardTitleText.textContent = t.boardTitle || "Palabras descubiertas";
+  if (dom.newGameBtn) dom.newGameBtn.textContent = t.newGame || "Nuevo Juego";
+  if (dom.timeLabel) dom.timeLabel.textContent = t.turnTimeLabel || "Tiempo por turno (seg):";
+  if (dom.roundsLabel) dom.roundsLabel.textContent = t.roundsLabel || "Número de rondas:";
+  if (dom.playersLabel) dom.playersLabel.textContent = t.playersLabel || "Jugadores:";
+  if (dom.categoriesTitle) dom.categoriesTitle.textContent = t.selectCategories || "Selecciona las categorías";
+  if (dom.playerColorsTitle) dom.playerColorsTitle.textContent = t.playerNamesTitle || "Nombres y colores de los jugadores";
+  if (dom.continueRevealBtn) dom.continueRevealBtn.textContent = t.continue || "Continuar";
+  if (dom.feedbackContinue) dom.feedbackContinue.textContent = t.continue || "Continuar";
 }
 
 function initPlayerSetup() {
@@ -212,8 +212,9 @@ function initPlayerSetup() {
   state.scores = [];
   state.playerColors = [];
 
+  const defaultPlayerName = state.text.player || "Jugador";
   for (let i = 0; i < numPlayers; i++) {
-    state.players.push(`${state.text.player} ${i + 1}`);
+    state.players.push(`${defaultPlayerName} ${i + 1}`);
     state.scores.push(0);
     state.playerColors.push(COLOR_PALETTE[i % COLOR_PALETTE.length]);
   }
@@ -221,7 +222,10 @@ function initPlayerSetup() {
 }
 
 function renderPlayerConfig() {
+  if (!dom.playerColorsContainer) return;
   dom.playerColorsContainer.innerHTML = "";
+  const defaultPlayerName = state.text.player || "Jugador";
+
   state.players.forEach((name, idx) => {
     const item = document.createElement("div");
     item.className = "player-color-item";
@@ -230,7 +234,7 @@ function renderPlayerConfig() {
     input.type = "text";
     input.value = name;
     input.onchange = (e) => {
-      state.players[idx] = e.target.value.trim() || `${state.text.player} ${idx + 1}`;
+      state.players[idx] = e.target.value.trim() || `${defaultPlayerName} ${idx + 1}`;
     };
 
     const colorPicker = document.createElement("div");
@@ -253,16 +257,20 @@ function renderPlayerConfig() {
 }
 
 function renderCategorySelection() {
-  const cats = categoriesData[state.lang] || categoriesData.es;
+  const cats = categoriesData[state.lang] || categoriesData.es || [];
+  if (!dom.categoriesContainer) return;
   dom.categoriesContainer.innerHTML = "";
+  
   cats.forEach(cat => {
     const card = document.createElement("div");
     card.className = `category-card ${state.selectedCategoryIds.has(cat.id) ? "selected" : ""}`;
     card.style.setProperty("--selected-bg", cat.color || "#eee7f4");
+    
+    const wordsBadgeText = state.text.wordsBadge || "palabras";
     card.innerHTML = `
       <h4>${cat.name}</h4>
-      <p>${cat.description}</p>
-      <span class="badge">${cat.words.length} ${state.text.wordsBadge}</span>
+      <p>${cat.description || ""}</p>
+      <span class="badge">${cat.words ? cat.words.length : 0} ${wordsBadgeText}</span>
     `;
     card.onclick = () => {
       if (state.selectedCategoryIds.has(cat.id)) {
@@ -278,11 +286,13 @@ function renderCategorySelection() {
 }
 
 function updateCategoryCount() {
-  dom.categoryCount.textContent = `${state.selectedCategoryIds.size} ${state.text.categoriesSelected}`;
+  if (!dom.categoryCount) return;
+  const labelText = state.text.categoriesSelected || "categorías seleccionadas";
+  dom.categoryCount.textContent = `${state.selectedCategoryIds.size} ${labelText}`;
 }
 
 function selectRandomCategories() {
-  const cats = categoriesData[state.lang] || categoriesData.es;
+  const cats = categoriesData[state.lang] || categoriesData.es || [];
   const count = parseInt(dom.configCatCount.value, 10) || state.targetCount;
   const shuffled = shuffle(cats);
   state.selectedCategoryIds.clear();
@@ -291,11 +301,15 @@ function selectRandomCategories() {
 }
 
 function setupPlayersSelect() {
+  if (!dom.playersSelect) return;
   dom.playersSelect.innerHTML = "";
+  const singleLabel = state.text.player || "Jugador";
+  const multiLabel = state.text.players || "Jugadores";
+
   for (let i = 1; i <= 5; i++) {
     const opt = document.createElement("option");
     opt.value = i;
-    opt.textContent = `${i} ${i === 1 ? state.text.player : state.text.players}`;
+    opt.textContent = `${i} ${i === 1 ? singleLabel : multiLabel}`;
     dom.playersSelect.appendChild(opt);
   }
   dom.playersSelect.value = 1;
@@ -303,25 +317,27 @@ function setupPlayersSelect() {
 
 function startGame() {
   if (state.selectedCategoryIds.size === 0) {
-    dom.startError.textContent = state.text.selectAtLeastOne;
+    if (dom.startError) dom.startError.textContent = state.text.selectAtLeastOne || "Selecciona al menos una categoría";
     return;
   }
-  dom.startError.textContent = "";
+  if (dom.startError) dom.startError.textContent = "";
 
-  const cats = categoriesData[state.lang] || categoriesData.es;
+  const cats = categoriesData[state.lang] || categoriesData.es || [];
   state.activeCategories = cats.filter(c => state.selectedCategoryIds.has(c.id));
   state.roundCount = parseInt(dom.roundTotalInput.value, 10) || 3;
   state.turnTimeLimit = parseInt(dom.turnTimeInput.value, 10) || 120;
 
   state.deck = [];
   state.activeCategories.forEach(cat => {
-    cat.words.forEach(w => {
-      state.deck.push({
-        ...w,
-        categoryId: cat.id,
-        categoryName: cat.name
+    if (cat.words) {
+      cat.words.forEach(w => {
+        state.deck.push({
+          ...w,
+          categoryId: cat.id,
+          categoryName: cat.name
+        });
       });
-    });
+    }
   });
 
   state.deck = shuffle(state.deck);
@@ -345,8 +361,9 @@ function startGame() {
 }
 
 function renderBoard() {
+  if (!dom.boardCategories) return;
   dom.boardCategories.innerHTML = "";
-  dom.discoveredCount.textContent = state.discoveredWordsCount;
+  if (dom.discoveredCount) dom.discoveredCount.textContent = state.discoveredWordsCount;
 
   state.activeCategories.forEach(cat => {
     const catEl = document.createElement("div");
@@ -355,7 +372,7 @@ function renderBoard() {
 
     const header = document.createElement("div");
     header.className = "board-category-header";
-    header.innerHTML = `<h3>${cat.name}</h3><p class="fortext">${cat.description}</p>`;
+    header.innerHTML = `<h3>${cat.name}</h3><p class="fortext">${cat.description || ""}</p>`;
     catEl.appendChild(header);
 
     const wordList = document.createElement("div");
@@ -419,11 +436,17 @@ function renderTurnUI() {
   dom.feedbackModal.classList.add("hidden");
 
   renderScoreboard();
-  dom.roundLabel.textContent = `${state.text.round} ${state.currentRound} / ${state.roundCount}`;
-  dom.turnLabel.textContent = `${state.text.turnOf}: ${state.players[state.currentPlayerIndex]}`;
+  
+  const roundText = state.text.round || "Ronda";
+  const turnText = state.text.turnOf || "Turno de";
+  const roundAttemptsText = state.text.roundAttempts || "Intentos en ronda";
+  const incorrectText = state.text.incorrect || "Incorrectos";
+
+  dom.roundLabel.textContent = `${roundText} ${state.currentRound} / ${state.roundCount}`;
+  dom.turnLabel.textContent = `${turnText}: ${state.players[state.currentPlayerIndex]}`;
 
   dom.clueStage.textContent = renderClue(state.currentCard.word, state.currentRound, state.emojiMap);
-  dom.attemptStatus.textContent = `${state.text.roundAttempts}: ${state.attemptsInRound} (${state.text.incorrect}: ${state.incorrectAttempts}/${MAX_INCORRECT})`;
+  dom.attemptStatus.textContent = `${roundAttemptsText}: ${state.attemptsInRound} (${incorrectText}: ${state.incorrectAttempts}/${MAX_INCORRECT})`;
 
   renderGuessInputs();
   renderCategoryChoices();
@@ -433,6 +456,7 @@ function renderTurnUI() {
 }
 
 function renderScoreboard() {
+  if (!dom.scoreboard) return;
   dom.scoreboard.innerHTML = "";
   const maxScore = Math.max(...state.scores, 10);
 
@@ -452,8 +476,10 @@ function renderScoreboard() {
 }
 
 function renderGuessInputs() {
+  if (!dom.guessWords) return;
   dom.guessWords.innerHTML = "";
   const parts = state.currentCard.word.split(/\s*&\s*/);
+  const wordLabelText = state.text.word || "Palabra";
 
   parts.forEach((part, partIdx) => {
     const matches = part.match(/[A-ZÁÉÍÓÚÜÑ]+/g) || [];
@@ -474,7 +500,7 @@ function renderGuessInputs() {
       const input = document.createElement("input");
       input.type = "text";
       input.className = `guess-word-input ${isGuessed ? "already-guessed" : ""}`;
-      input.placeholder = isGuessed ? target : `${state.text.word} ${wordIdx + 1}`;
+      input.placeholder = isGuessed ? target : `${wordLabelText} ${wordIdx + 1}`;
       input.value = isGuessed ? target : "";
       input.disabled = isGuessed;
       input.dataset.partIdx = partIdx;
@@ -487,6 +513,7 @@ function renderGuessInputs() {
 }
 
 function renderCategoryChoices() {
+  if (!dom.guessCategories) return;
   dom.guessCategories.innerHTML = "";
   state.activeCategories.forEach(cat => {
     const btn = document.createElement("button");
@@ -509,7 +536,7 @@ function renderCategoryChoices() {
 function startTimer() {
   state.timeLeft = state.turnTimeLimit;
   state.isPaused = false;
-  dom.pauseTimeBtn.textContent = state.text.pause;
+  if (dom.pauseTimeBtn) dom.pauseTimeBtn.textContent = state.text.pause || "Pausar";
   updateTimerDisplay();
 
   state.timerId = setInterval(() => {
@@ -532,6 +559,7 @@ function stopTimer() {
 }
 
 function updateTimerDisplay() {
+  if (!dom.timer) return;
   const m = Math.floor(state.timeLeft / 60).toString().padStart(2, "0");
   const s = (state.timeLeft % 60).toString().padStart(2, "0");
   dom.timer.textContent = `${m}:${s}`;
@@ -543,20 +571,24 @@ function updateTimerDisplay() {
 }
 
 function handleTimeOut() {
-  showModalFeedback(state.text.timeOut, "bad", () => {
+  const msg = state.text.timeOut || "¡Tiempo agotado!";
+  showModalFeedback(msg, "bad", () => {
     advanceTurnAfterAttempt(false);
   });
 }
 
 function showModalFeedback(msg, type, onContinue) {
+  if (!dom.feedbackMessage || !dom.feedbackModal) return;
   dom.feedbackMessage.textContent = msg;
   dom.feedbackMessage.className = `feedback ${type}`;
   dom.feedbackModal.classList.remove("hidden");
 
-  dom.feedbackContinue.onclick = () => {
-    dom.feedbackModal.classList.add("hidden");
-    if (onContinue) onContinue();
-  };
+  if (dom.feedbackContinue) {
+    dom.feedbackContinue.onclick = () => {
+      dom.feedbackModal.classList.add("hidden");
+      if (onContinue) onContinue();
+    };
+  }
 }
 
 function checkGuess() {
@@ -616,7 +648,8 @@ function checkGuess() {
     state.discoveredWordsCount++;
     renderBoard();
 
-    showModalFeedback(`${state.text.fullSuccess} (+${pointsAwarded} pts)`, "good", () => {
+    const msg = state.text.fullSuccess || "¡Acierto total!";
+    showModalFeedback(`${msg} (+${pointsAwarded} pts)`, "good", () => {
       finishRoundWithComputerReveal(state.players[state.currentPlayerIndex]);
     });
     return;
@@ -625,8 +658,8 @@ function checkGuess() {
   if (partialMatch || categoryCorrect) {
     state.scores[state.currentPlayerIndex] += pointsAwarded;
 
-    let msg = `${state.text.partialSuccess} (+${pointsAwarded} pts). `;
-    if (categoryCorrect) msg += state.text.catCorrect;
+    let msg = `${state.text.partialSuccess || "Acierto parcial"} (+${pointsAwarded} pts). `;
+    if (categoryCorrect) msg += state.text.catCorrect || "Categoría correcta.";
     
     showModalFeedback(msg, "partial", () => {
       renderTurnUI();
@@ -636,7 +669,8 @@ function checkGuess() {
   }
 
   state.incorrectAttempts++;
-  showModalFeedback(state.text.nothingCorrect, "bad", () => {
+  const msgBad = state.text.nothingCorrect || "Sin aciertos.";
+  showModalFeedback(msgBad, "bad", () => {
     advanceTurnAfterAttempt(true);
   });
 }
@@ -682,7 +716,8 @@ function advanceTurnAfterAttempt(wasIncorrect) {
   state.attemptsInRound++;
 
   if (state.attemptsInRound >= MAX_TURNS_PER_ROUND || state.incorrectAttempts >= MAX_INCORRECT) {
-    finishRoundWithComputerReveal(state.text.computer);
+    const compText = state.text.computer || "Ordenador";
+    finishRoundWithComputerReveal(compText);
     return;
   }
 
@@ -696,35 +731,41 @@ function finishRoundWithComputerReveal(winnerName) {
   state.gameActivePanel.classList.add("hidden");
   state.revealInColumn.classList.remove("hidden");
 
-  dom.computerBadge.textContent = winnerName === state.text.computer ? state.text.computerBadge : winnerName;
-  dom.revealTitle.textContent = state.text.wordRevealedTitle;
+  const compText = state.text.computer || "Ordenador";
+  const compBadge = state.text.computerBadge || "REVELADO";
+  const wordRevTitle = state.text.wordRevealedTitle || "Palabra Revelada";
+
+  if (dom.computerBadge) dom.computerBadge.textContent = winnerName === compText ? compBadge : winnerName;
+  if (dom.revealTitle) dom.revealTitle.textContent = wordRevTitle;
 
   const fullWordWithEmoji = formatMinToEmoji(state.currentCard.word, state.emojiMap);
 
-  dom.revealedCategory.textContent = `${state.currentCard.categoryName} / ${state.currentCard.subcategory || ""}`;
-  dom.revealFortext.textContent = state.currentCard.fortext || "-";
-  dom.revealedWord.textContent = fullWordWithEmoji;
-  dom.revealHelp.textContent = state.currentCard.help || "-";
+  if (dom.revealedCategory) dom.revealedCategory.textContent = `${state.currentCard.categoryName} / ${state.currentCard.subcategory || ""}`;
+  if (dom.revealFortext) dom.revealFortext.textContent = state.currentCard.fortext || "-";
+  if (dom.revealedWord) dom.revealedWord.textContent = fullWordWithEmoji;
+  if (dom.revealHelp) dom.revealHelp.textContent = state.currentCard.help || "-";
 
-  if (winnerName === state.text.computer) {
+  if (winnerName === compText) {
     state.discoveredWords.push({
       word: state.currentCard.word,
       categoryId: state.currentCard.categoryId,
-      discoveredBy: state.text.computer
+      discoveredBy: compText
     });
     state.discoveredWordsCount++;
     renderBoard();
   }
 
-  dom.continueRevealBtn.onclick = () => {
-    if (state.currentRound < state.roundCount && state.deck.length > 0) {
-      state.currentRound++;
-      state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
-      nextTurn(true);
-    } else {
-      endGame();
-    }
-  };
+  if (dom.continueRevealBtn) {
+    dom.continueRevealBtn.onclick = () => {
+      if (state.currentRound < state.roundCount && state.deck.length > 0) {
+        state.currentRound++;
+        state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+        nextTurn(true);
+      } else {
+        endGame();
+      }
+    };
+  }
 }
 
 function endGame() {
@@ -732,8 +773,8 @@ function endGame() {
   dom.screenGame.classList.add("hidden");
   dom.screenEnd.classList.remove("hidden");
 
-  dom.endTitle.textContent = state.text.gameOver;
-  dom.finalScores.innerHTML = "";
+  if (dom.endTitle) dom.endTitle.textContent = state.text.gameOver || "Juego Terminado";
+  if (dom.finalScores) dom.finalScores.innerHTML = "";
 
   const sorted = state.players
     .map((p, i) => ({ name: p, score: state.scores[i], color: state.playerColors[i] }))
@@ -749,32 +790,42 @@ function endGame() {
 }
 
 function initEvents() {
-  dom.langScroll.onchange = (e) => loadLanguage(e.target.value);
-  dom.playersSelect.onchange = () => initPlayerSetup();
-  dom.randomCategoriesBtn.onclick = () => selectRandomCategories();
-  dom.startGameBtn.onclick = () => startGame();
-  dom.submitGuessBtn.onclick = () => checkGuess();
-  dom.revealHintBtn.onclick = () => handleHintReveal();
-  dom.newGameBtn.onclick = () => {
+  if (dom.langScroll) dom.langScroll.onchange = (e) => loadLanguage(e.target.value);
+  if (dom.playersSelect) dom.playersSelect.onchange = () => initPlayerSetup();
+  if (dom.randomCategoriesBtn) dom.randomCategoriesBtn.onclick = () => selectRandomCategories();
+  if (dom.startGameBtn) dom.startGameBtn.onclick = () => startGame();
+  if (dom.submitGuessBtn) dom.submitGuessBtn.onclick = () => checkGuess();
+  if (dom.revealHintBtn) dom.revealHintBtn.onclick = () => handleHintReveal();
+  if (dom.newGameBtn) dom.newGameBtn.onclick = () => {
     dom.screenEnd.classList.add("hidden");
     dom.screenStart.classList.remove("hidden");
   };
 
-  dom.configBtn.onclick = () => {
-    dom.configPanel.classList.toggle("hidden");
-  };
+  if (dom.configBtn) {
+    dom.configBtn.onclick = () => {
+      if (dom.configPanel) dom.configPanel.classList.toggle("hidden");
+    };
+  }
 
-  dom.infoBtn.onclick = () => {
-    dom.rulesModal.classList.remove("hidden");
-  };
-  dom.closeRules.onclick = () => {
-    dom.rulesModal.classList.add("hidden");
-  };
+  if (dom.infoBtn) {
+    dom.infoBtn.onclick = () => {
+      if (dom.rulesModal) dom.rulesModal.classList.remove("hidden");
+    };
+  }
+  if (dom.closeRules) {
+    dom.closeRules.onclick = () => {
+      if (dom.rulesModal) dom.rulesModal.classList.add("hidden");
+    };
+  }
 
-  dom.pauseTimeBtn.onclick = () => {
-    state.isPaused = !state.isPaused;
-    dom.pauseTimeBtn.textContent = state.isPaused ? state.text.resume : state.text.pause;
-  };
+  if (dom.pauseTimeBtn) {
+    dom.pauseTimeBtn.onclick = () => {
+      state.isPaused = !state.isPaused;
+      const pauseText = state.text.pause || "Pausar";
+      const resumeText = state.text.resume || "Reanudar";
+      dom.pauseTimeBtn.textContent = state.isPaused ? resumeText : pauseText;
+    };
+  }
 }
 
 function init() {
