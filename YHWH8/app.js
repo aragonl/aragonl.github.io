@@ -2,15 +2,12 @@
 // CONFIGURACIÓN E ITERACIÓN DE IDIOMAS
 // ==========================================
 
-// Lista de idiomas soportados
 const SUPPORTED_LANGS = ["es", "en", "it"];
 
-// Contenedores globales donde se agrupan los datos por idioma
 export const allCategories = {};
 export const allTexts = {};
 export const allEmojiMaps = {};
 
-// Estado global de la aplicación
 const state = {
   lang: "es",
   text: {},
@@ -21,9 +18,9 @@ const state = {
   currentPlayerIndex: 0,
   currentRound: 1,
   totalRounds: 3,
-  turnTime: 30,
+  turnTime: 120,
   timer: null,
-  timeLeft: 30,
+  timeLeft: 120,
   gameActive: false,
   isPaused: false,
   discoveredWords: []
@@ -81,22 +78,21 @@ function setLanguage(lang) {
 // ==========================================
 
 /**
- * Actualiza los textos estáticos e interactivos en el DOM según el idioma
+ * Actualiza los textos estáticos según los IDs reales de tu index.html
  */
 function updateAllTexts() {
   const elements = [
     { id: "subtitle", key: "subtitle" },
-    { id: "start-title", key: "startTitle" },
-    { id: "lbl-players", key: "players" },
-    { id: "lbl-player-colors", key: "playerColorsTitle" },
-    { id: "lbl-time", key: "time" },
-    { id: "lbl-rounds", key: "rounds" },
-    { id: "lbl-categories-title", key: "categoriesTitle" },
-    { id: "lbl-random-categories", key: "randomCategories" },
-    { id: "lbl-category-count", key: "categoryCount" },
-    { id: "btn-start", key: "startGame" },
-    { id: "board-title", key: "boardTitle" },
-    { id: "btn-new-game", key: "newGame" }
+    { id: "start-game", key: "startGame" },
+    { id: "players-label", key: "players" },
+    { id: "time-label", key: "time" },
+    { id: "rounds-label", key: "rounds" },
+    { id: "player-colors-title", key: "playerColorsTitle" },
+    { id: "categories-title", key: "categoriesTitle" },
+    { id: "random-categories", key: "randomCategories" },
+    { id: "category-count", key: "categoryCount" },
+    { id: "board-title-text", key: "boardTitle" },
+    { id: "new-game", key: "newGame" }
   ];
 
   elements.forEach(({ id, key }) => {
@@ -104,14 +100,14 @@ function updateAllTexts() {
     if (el) el.textContent = t(key);
   });
 
-  const btnPause = document.getElementById("btn-pause");
+  const btnPause = document.getElementById("pause-time");
   if (btnPause) {
     btnPause.textContent = state.isPaused ? t("resume") : t("pause");
   }
 }
 
 /**
- * Reemplaza palabras clave por emojis de forma insensible a mayúsculas/minúsculas
+ * Mapeo de emojis para categorías
  */
 function applyEmojiMapping(text) {
   if (!text || typeof text !== "string") return text;
@@ -126,10 +122,10 @@ function applyEmojiMapping(text) {
 }
 
 /**
- * Renderiza la lista de selección de categorías en el DOM
+ * Renderiza la lista de categorías en el contenedor id="categories" de tu HTML
  */
 function renderCategorySelection() {
-  const container = document.getElementById("category-list");
+  const container = document.getElementById("categories");
   if (!container) return;
   container.innerHTML = "";
 
@@ -151,8 +147,18 @@ function renderCategorySelection() {
 }
 
 // ==========================================
-// LÓGICA DEL JUEGO
+// LÓGICA DEL JUEGO Y EVENTOS DE MODALES
 // ==========================================
+
+function toggleConfigPanel() {
+  const panel = document.getElementById("config-panel");
+  panel?.classList.toggle("hidden");
+}
+
+function toggleRulesModal() {
+  const modal = document.getElementById("rules-modal");
+  modal?.classList.toggle("hidden");
+}
 
 function startGame() {
   const checkboxes = document.querySelectorAll(".cat-checkbox:checked");
@@ -169,8 +175,8 @@ function startGame() {
   state.currentPlayerIndex = 0;
   state.discoveredWords = [];
 
-  document.getElementById("setup-screen")?.classList.add("hidden");
-  document.getElementById("game-screen")?.classList.remove("hidden");
+  document.getElementById("screen-start")?.classList.add("hidden");
+  document.getElementById("screen-game")?.classList.remove("hidden");
 
   updateTurnUI();
   startTimer();
@@ -179,10 +185,11 @@ function startGame() {
 function updateTurnUI() {
   const currentPlayer = state.players[state.currentPlayerIndex] || { name: `${t("player")} 1` };
   
-  const turnInfoEl = document.getElementById("turn-info");
-  if (turnInfoEl) {
-    turnInfoEl.textContent = `${t("round")} ${state.currentRound} - ${t("turn")}: ${currentPlayer.name}`;
-  }
+  const turnLabel = document.getElementById("turn-label");
+  const roundLabel = document.getElementById("round-label");
+
+  if (roundLabel) roundLabel.textContent = `${t("round")} ${state.currentRound}`;
+  if (turnLabel) turnLabel.textContent = `${t("turn")}: ${currentPlayer.name}`;
 }
 
 function startTimer() {
@@ -204,9 +211,11 @@ function startTimer() {
 }
 
 function updateTimerUI() {
-  const timerEl = document.getElementById("timer-display");
+  const timerEl = document.getElementById("timer");
   if (timerEl) {
-    timerEl.textContent = `${state.timeLeft} ${t("seconds")}`;
+    const mins = Math.floor(state.timeLeft / 60).toString().padStart(2, "0");
+    const secs = (state.timeLeft % 60).toString().padStart(2, "0");
+    timerEl.textContent = `${mins}:${secs}`;
   }
 }
 
@@ -231,7 +240,7 @@ function nextTurn() {
 
 function togglePause() {
   state.isPaused = !state.isPaused;
-  const btn = document.getElementById("btn-pause");
+  const btn = document.getElementById("pause-time");
   if (btn) btn.textContent = state.isPaused ? t("resume") : t("pause");
 }
 
@@ -239,27 +248,33 @@ function endGame() {
   clearInterval(state.timer);
   state.gameActive = false;
   alert(t("end"));
-  document.getElementById("setup-screen")?.classList.remove("hidden");
-  document.getElementById("game-screen")?.classList.add("hidden");
+  document.getElementById("screen-start")?.classList.remove("hidden");
+  document.getElementById("screen-game")?.classList.add("hidden");
 }
 
 // ==========================================
-// INICIALIZACIÓN
+// INICIALIZACIÓN DE LA APLICACIÓN
 // ==========================================
 
 async function initApp() {
-  // 1. Cargar módulos de idiomas dinámicamente
+  // 1. Cargar módulos dinámicamente
   await loadLanguages();
 
-  // 2. Establecer el idioma por defecto y renderizar interfaz
+  // 2. Definir idioma inicial
   setLanguage("es");
 
-  // 3. Asignar Event Listeners
-  document.getElementById("btn-start")?.addEventListener("click", startGame);
-  document.getElementById("btn-pause")?.addEventListener("click", togglePause);
-  document.getElementById("btn-new-game")?.addEventListener("click", endGame);
+  // 3. Vincular los eventos a los botones reales del index.html
+  document.getElementById("start-game")?.addEventListener("click", startGame);
+  document.getElementById("pause-time")?.addEventListener("click", togglePause);
+  document.getElementById("new-game")?.addEventListener("click", endGame);
 
-  const langSelect = document.getElementById("lang-select");
+  // Botones de Configuración y Reglas
+  document.getElementById("config-btn")?.addEventListener("click", toggleConfigPanel);
+  document.getElementById("info-btn")?.addEventListener("click", toggleRulesModal);
+  document.getElementById("close-rules")?.addEventListener("click", toggleRulesModal);
+
+  // Selector de idioma id="lang-scroll"
+  const langSelect = document.getElementById("lang-scroll");
   if (langSelect) {
     langSelect.addEventListener("change", (e) => {
       setLanguage(e.target.value);
@@ -267,5 +282,4 @@ async function initApp() {
   }
 }
 
-// Ejecutar la aplicación al cargar el DOM
 document.addEventListener("DOMContentLoaded", initApp);
