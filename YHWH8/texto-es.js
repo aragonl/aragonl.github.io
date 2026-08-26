@@ -23,6 +23,7 @@ export const TEXT = {
   turn: "Turno de",
   seconds: "seg",
   boardTitle: "Palabras descubiertas",
+  guessedWordTitle: "¡Palabra Adivinada!",
   guessPlaceholder: "Escribe la palabra",
   guessPartPlaceholder: "Escribe la palabra {n}",
   categoryPlaceholder: "Elige una categoría",
