@@ -23,6 +23,7 @@ export const TEXT = {
   turn: "Turn of",
   seconds: "sec",
   boardTitle: "Discovered words",
+  guessedWordTitle: "Word Guessed!",
   guessPlaceholder: "Type the word",
   guessPartPlaceholder: "Type word {n}",
   categoryPlaceholder: "Choose a category",
