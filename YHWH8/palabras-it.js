@@ -190,16 +190,16 @@ export const WORD_DATA = [
   {
     category: "Comandamenti",
     dificultad: 1,
-    fortext: "Leggi dell'Alleanza",
+    fortext: "il Decalogo",
     words: [
       {
         category: "In positivo",
-        words: ["AMARE Dio", "SANTIFICARE", "RISPETTARE"],
-        help: ["primo comandamento", "le feste", "padre e madre"]
+        words: ["AMARE", "SANTIFICARE", "RISPETTARE"],
+        help: ["...Dio", "...le feste", "...padre e madre"]
       },
       {
         category: "Proibito",
-        words: ["proibito UCCIDERE", "prohibito RUBARE", "prohibito ADULTERARE", "prohibito MENTIRE"],
+        words: ["proibito UCCIDERE", "proibito RUBARE", "proibito ADULTERARE", "proibito MENTIRE"],
         help: ["attentare alla vita", "prendere ciò che è altrui", "rompere l'alleanza matrimoniale", "dire falsa testimonianza"]
       }
     ]
