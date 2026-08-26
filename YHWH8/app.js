@@ -42,7 +42,7 @@ async function loadLanguages() {
           import(`./texto-${lang}.js`)
         ]);
 
-        allCategories[lang] = wordsModule.categoriesData || wordsModule.WORD_DATA || [];
+        allCategories[lang] = wordsModule.WORD_DATA || [];
         allTexts[lang] = textModule.TEXT || textModule[`text${lang.toUpperCase()}`] || {};
         allEmojiMaps[lang] = textModule.EMOJI_MAP || textModule[`EMOJI_MAP_${lang.toUpperCase()}`] || {};
       } catch (err) {
