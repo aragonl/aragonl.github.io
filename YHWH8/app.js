@@ -9,9 +9,9 @@ const allCategories = {
   it: categoriesIT
 };
 
-import { textES, EMOJI_MAP_ES } from "./texto-es.js";
-import { textIT, EMOJI_MAP_IT } from "./texto-it.js";
-import { textEN, EMOJI_MAP_EN } from "./texto-en.js";
+import { TEXT as textES, EMOJI_MAP as EMOJI_MAP_ES } from "./texto-es.js";
+import { TEXT as textIT, EMOJI_MAP as EMOJI_MAP_IT } from "./texto-it.js";
+import { TEXT as textEN, EMOJI_MAP as EMOJI_MAP_EN } from "./texto-en.js";
 
 const MAX_TURNS_PER_ROUND = 12;
 const MAX_INCORRECT = 10;
