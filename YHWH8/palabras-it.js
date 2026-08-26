@@ -1,5 +1,5 @@
 // Dati del gioco. Ogni categoria principale dovrebbe avere 7 parole.
-export const categoriesData = [
+export const WORD_DATA = [
   {
     category: "Sacramenti",
     dificultad: 1,
