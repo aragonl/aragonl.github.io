@@ -1,6 +1,7 @@
 export const EMOJI_MAP = {
   "HEART": "❤️",
   "PROHIBITED": "🚫",
+    "forbidden": "🚫",
   "LOVE": "❤️"
 };
 
@@ -12,7 +13,7 @@ export const TEXT = {
   playerColorsTitle: "Player colors",
   choosePlayerColor: "Choose color for Player {n}",
   time: "Maximum turn time (seconds)",
-  rounds: "Rtot — clue rounds before reveal",
+  rounds: "Clue rounds before reveal",
   categoriesTitle: "Categories",
   randomCategories: "Pick randomly",
   categoryCount: "Select the categories that will enter the game.",
