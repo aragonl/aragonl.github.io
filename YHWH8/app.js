@@ -18,10 +18,8 @@ const state = {
   currentWord: null,
   currentRound: 0,
   currentClueRound: 0,
-  
   primaryPlayer: 0,
   currentPlayer: 0,
-  
   roundWordsCompleted: 0,
   scores: [],
   timerId: null,
@@ -57,11 +55,11 @@ async function loadLanguage(lang) {
 }
 
 function updateUIElements() {
-  const setText = (id, val) => { const el = $(id); if (el) el.textContent = val; };
+  const setText = (id, val) => { const el = $(id); if (el && val !== undefined) el.textContent = val; };
 
   setText("subtitle", TEXT.subtitle);
   setText("start-title", t("startTitle"));
-  setText("player-colors-title", "Nombres y colores de los jugadores");
+  setText("player-colors-title", t("playerColorsTitle") || "Nombres y colores de los jugadores");
   setText("players-label", t("players"));
   setText("time-label", t("time"));
   setText("rounds-label", t("rounds"));
@@ -77,6 +75,11 @@ function updateUIElements() {
   setText("pause-time", state.paused ? t("resume") : t("pause"));
   setText("feedback-continue", t("continue"));
   setText("submit-guess", t("guess"));
+
+  // Actualización del modal de reglas/info según idioma
+  if (TEXT.rulesTitle && $("rules-title")) $("rules-title").textContent = TEXT.rulesTitle;
+  if (TEXT.rulesBody && $("rules-body")) $("rules-body").innerHTML = TEXT.rulesBody;
+  if (TEXT.closeRules && $("close-rules")) $("close-rules").textContent = TEXT.closeRules;
 
   const rev1 = document.querySelector(".reveal-row:nth-child(1) .reveal-label");
   if (rev1) rev1.textContent = t("revealCategoryLabel");
@@ -311,6 +314,7 @@ function getPlayerName(index) {
   return state.playerNames[index] || `${t("player")} ${index + 1}`;
 }
 
+// Configuración de visualización de colores original
 function renderPlayerColorSelection() {
   ensurePlayerColorsAndNames();
   const box = $("player-colors");
@@ -321,7 +325,6 @@ function renderPlayerColorSelection() {
   for (let i = 0; i < n; i++) {
     const card = document.createElement("div");
     card.className = "player-card-edit";
-    card.style.borderColor = state.playerColors[i];
 
     const input = document.createElement("input");
     input.type = "text";
@@ -331,38 +334,25 @@ function renderPlayerColorSelection() {
       state.playerNames[i] = e.target.value.trim() || `${t("player")} ${i + 1}`;
     });
 
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "player-color-button";
-    btn.style.background = state.playerColors[i];
-    btn.textContent = "Color";
-    btn.addEventListener("click", () => openPlayerColorPicker(i));
+    const colorPickerContainer = document.createElement("div");
+    colorPickerContainer.className = "player-color-picker";
+
+    PLAYER_COLORS.forEach(color => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `color-option ${state.playerColors[i] === color.value ? "selected" : ""}`;
+      btn.style.background = color.value;
+      btn.addEventListener("click", () => {
+        state.playerColors[i] = color.value;
+        renderPlayerColorSelection();
+      });
+      colorPickerContainer.appendChild(btn);
+    });
 
     card.appendChild(input);
-    card.appendChild(btn);
+    card.appendChild(colorPickerContainer);
     box.appendChild(card);
   }
-}
-
-function openPlayerColorPicker(playerIndex) {
-  const box = $("player-color-options");
-  if (!box) return;
-  box.innerHTML = `<strong>${t("choosePlayerColor", { n: playerIndex + 1 })}</strong>`;
-  PLAYER_COLORS.forEach(color => {
-    const usedByOther = state.playerColors.some((v, i) => i !== playerIndex && v === color.value);
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "color-option";
-    btn.style.background = color.value;
-    btn.textContent = color.name;
-    btn.disabled = usedByOther;
-    btn.addEventListener("click", () => {
-      state.playerColors[playerIndex] = color.value;
-      renderPlayerColorSelection();
-      box.innerHTML = "";
-    });
-    box.appendChild(btn);
-  });
 }
 
 function renderCategorySelection() {
@@ -489,16 +479,25 @@ function nextWord() {
   renderClue();
 }
 
+// Filtra únicamente las palabras/términos en MAYÚSCULAS para ser adivinados
 function getAnswerParts(word) {
   const raw = String(word ?? "");
   const parts = splitAnswer(raw);
-  const explicitTargets = parts.map(part => {
+  const explicitTargets = [];
+
+  parts.forEach(part => {
+    const uppercaseMatches = part.match(/[A-ZÁÉÍÓÚÜÑ]{2,}(?:-[A-ZÁÉÍÓÚÜÑ]{2,})*/g);
+    if (uppercaseMatches) {
+      explicitTargets.push(...uppercaseMatches);
+    }
+  });
+
+  if (explicitTargets.length) return explicitTargets;
+
+  return parts.map(part => {
     const matches = part.match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:-[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)*/g);
     return matches ? matches.join(" ").trim() : "";
   }).filter(Boolean);
-
-  if (explicitTargets.length) return explicitTargets;
-  return parts;
 }
 
 function renderGuessInputs() {
@@ -579,6 +578,15 @@ function renderScoreboard() {
   });
 }
 
+// Convierte a emojis los fragmentos que estén completamente en minúsculas
+function formatWordWithEmojis(text) {
+  if (!text) return "";
+  return String(text).replace(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:-[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)*/g, m => {
+    const isAllLowercase = m === m.toLowerCase();
+    return (isAllLowercase && EMOJI_MAP && EMOJI_MAP[m]) ? EMOJI_MAP[m] : m;
+  });
+}
+
 function renderClue() {
   const w = state.currentWord;
   let r = state.currentClueRound;
@@ -600,12 +608,12 @@ function renderClue() {
 
     let remaining = part;
     targetMatches.forEach(target => {
-      // Revisa estrictamente si TODAS las letras de la palabra objetivo están en minúsculas
       const isAllLowercase = target === target.toLowerCase();
-      
+      const isAllUppercase = target === target.toUpperCase() && target.length > 1;
+
       if (isAllLowercase && EMOJI_MAP && EMOJI_MAP[target]) {
         remaining = remaining.replace(target, EMOJI_MAP[target]);
-      } else {
+      } else if (isAllUppercase) {
         const shown = vowelCount > 0 ? revealVowels(target, vowelBudget) : stripVowels(target);
         vowelBudget = Math.max(0, vowelBudget - (target.match(/[AEIOUÁÉÍÓÚÜaeiouáéíóúü]/g) || []).length);
         remaining = remaining.replace(target, shown);
@@ -613,18 +621,6 @@ function renderClue() {
     });
     return remaining;
   });
-
-  if (r < 3) {
-    for (let i = 0; i < displayedParts.length; i++) {
-      const part = parts[i];
-      if (/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+/.test(part)) {
-        displayedParts[i] = part.replace(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+(?:-[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)*/g, m => {
-          const isAllLowercase = m === m.toLowerCase();
-          return (isAllLowercase && EMOJI_MAP && EMOJI_MAP[m]) ? EMOJI_MAP[m] : stripVowels(m);
-        });
-      }
-    }
-  }
 
   const clues = [];
   if (r >= 1 && w.help) clues.push(`<span class="hint-attention">${escapeHtml(t("hintHelp", { help: w.help }))}</span>`);
@@ -830,7 +826,7 @@ function startComputerReveal(type = "computer", word = null, winnerName = null) 
 
   if ($("revealed-category")) $("revealed-category").textContent = `${state.currentWord.mainCategory} · ${state.currentWord.subcategory}`;
   if ($("reveal-fortext")) $("reveal-fortext").textContent = state.currentWord.fortext || "";
-  if ($("revealed-word")) $("revealed-word").textContent = state.currentWord.word;
+  if ($("revealed-word")) $("revealed-word").textContent = formatWordWithEmojis(state.currentWord.word);
   if ($("reveal-help")) $("reveal-help").textContent = state.currentWord.help || "";
 
   let titleText = t("specialRound");
@@ -839,8 +835,8 @@ function startComputerReveal(type = "computer", word = null, winnerName = null) 
   if (type === "exhausted") {
     titleText = t("revealedUnansweredTitle");
   } else if (type === "guessed") {
-    titleText = "¡Palabra Adivinada!";
-    badgeText = winnerName ? `Puntos para ${winnerName}` : "¡Adivinada!";
+    titleText = t("guessedWordTitle") || "¡Palabra Adivinada!";
+    badgeText = winnerName ? (t("pointsForPlayer", { name: winnerName }) || `Puntos para ${winnerName}`) : "¡Adivinada!";
   }
 
   if ($("reveal-title")) $("reveal-title").textContent = titleText;
@@ -907,7 +903,7 @@ function renderBoard() {
     discovered.forEach(w => {
       const chip = document.createElement("div");
       chip.className = "word-chip";
-      chip.innerHTML = `<strong>${escapeHtml(w.word)}</strong>
+      chip.innerHTML = `<strong>${escapeHtml(formatWordWithEmojis(w.word))}</strong>
         <small>${escapeHtml(w.subcategory)}</small>`;
       list.appendChild(chip);
     });
