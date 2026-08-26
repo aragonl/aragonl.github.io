@@ -2,11 +2,10 @@
 // CONFIGURACIÓN E ITERACIÓN DE IDIOMAS
 // ==========================================
 
-// Idiomas soportados por la aplicación. 
-// Para añadir uno nuevo, solo agrégalo a este array y crea sus archivos correspondientes.
+// Lista de idiomas soportados
 const SUPPORTED_LANGS = ["es", "en", "it"];
 
-// Contenedores globales donde se agrupan las traducciones y datos por idioma
+// Contenedores globales donde se agrupan los datos por idioma
 export const allCategories = {};
 export const allTexts = {};
 export const allEmojiMaps = {};
@@ -31,7 +30,7 @@ const state = {
 };
 
 /**
- * Carga dinámicamente los archivos de palabras y textos para todos los idiomas declarados.
+ * Carga dinámicamente WORD_DATA, TEXT y EMOJI_MAP para todos los idiomas
  */
 async function loadLanguages() {
   await Promise.all(
@@ -43,17 +42,25 @@ async function loadLanguages() {
         ]);
 
         allCategories[lang] = wordsModule.WORD_DATA || [];
-        allTexts[lang] = textModule.TEXT || textModule[`text${lang.toUpperCase()}`] || {};
-        allEmojiMaps[lang] = textModule.EMOJI_MAP || textModule[`EMOJI_MAP_${lang.toUpperCase()}`] || {};
+        allTexts[lang] = textModule.TEXT || {};
+        allEmojiMaps[lang] = textModule.EMOJI_MAP || {};
       } catch (err) {
-        console.warn(`No se pudieron cargar completamente los módulos para el idioma "${lang}":`, err);
+        console.warn(`No se pudieron cargar los módulos para el idioma "${lang}":`, err);
       }
     })
   );
 }
 
 /**
- * Cambia el idioma activo en el estado y refresca los datos de texto y mapa de emojis.
+ * Función auxiliar para obtener textos traducidos con reemplazo de variables
+ */
+function t(key, vars = {}) {
+  let s = state.text[key] ?? key;
+  return s.replace(/\{([a-zA-Z0-9_]+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
+}
+
+/**
+ * Cambia el idioma activo y actualiza la interfaz
  */
 function setLanguage(lang) {
   if (!allTexts[lang]) {
@@ -65,15 +72,8 @@ function setLanguage(lang) {
   state.emojiMap = allEmojiMaps[lang] || {};
   state.categories = allCategories[lang] || allCategories.es || [];
   
-  updateUIStaticText();
-}
-
-/**
- * Función auxiliar para obtener textos traducidos con reemplazo de variables.
- */
-function t(key, vars = {}) {
-  let s = state.text[key] ?? key;
-  return s.replace(/\{([a-zA-Z0-9_]+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
+  updateAllTexts();
+  renderCategorySelection();
 }
 
 // ==========================================
@@ -81,30 +81,37 @@ function t(key, vars = {}) {
 // ==========================================
 
 /**
- * Actualiza los elementos estáticos de la interfaz según el idioma seleccionado.
+ * Actualiza los textos estáticos e interactivos en el DOM según el idioma
  */
-function updateUIStaticText() {
-  const subtitleEl = document.getElementById("subtitle");
-  if (subtitleEl) subtitleEl.textContent = t("subtitle");
+function updateAllTexts() {
+  const elements = [
+    { id: "subtitle", key: "subtitle" },
+    { id: "start-title", key: "startTitle" },
+    { id: "lbl-players", key: "players" },
+    { id: "lbl-player-colors", key: "playerColorsTitle" },
+    { id: "lbl-time", key: "time" },
+    { id: "lbl-rounds", key: "rounds" },
+    { id: "lbl-categories-title", key: "categoriesTitle" },
+    { id: "lbl-random-categories", key: "randomCategories" },
+    { id: "lbl-category-count", key: "categoryCount" },
+    { id: "btn-start", key: "startGame" },
+    { id: "board-title", key: "boardTitle" },
+    { id: "btn-new-game", key: "newGame" }
+  ];
 
-  const btnStartEl = document.getElementById("btn-start");
-  if (btnStartEl) btnStartEl.textContent = t("startGame");
+  elements.forEach(({ id, key }) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t(key);
+  });
 
-  const btnPauseEl = document.getElementById("btn-pause");
-  if (btnPauseEl) btnPauseEl.textContent = state.isPaused ? t("resume") : t("pause");
-
-  const boardTitleEl = document.getElementById("board-title");
-  if (boardTitleEl) boardTitleEl.textContent = t("boardTitle");
-
-  const btnNewGameEl = document.getElementById("btn-new-game");
-  if (btnNewGameEl) btnNewGameEl.textContent = t("newGame");
-
-  const randomCatLabel = document.getElementById("lbl-random-categories");
-  if (randomCatLabel) randomCatLabel.textContent = t("randomCategories");
+  const btnPause = document.getElementById("btn-pause");
+  if (btnPause) {
+    btnPause.textContent = state.isPaused ? t("resume") : t("pause");
+  }
 }
 
 /**
- * Reemplaza palabras clave por emojis de forma insensible a mayúsculas/minúsculas.
+ * Reemplaza palabras clave por emojis de forma insensible a mayúsculas/minúsculas
  */
 function applyEmojiMapping(text) {
   if (!text || typeof text !== "string") return text;
@@ -119,7 +126,7 @@ function applyEmojiMapping(text) {
 }
 
 /**
- * Renderiza la lista de selección de categorías en el DOM.
+ * Renderiza la lista de selección de categorías en el DOM
  */
 function renderCategorySelection() {
   const container = document.getElementById("category-list");
@@ -152,7 +159,7 @@ function startGame() {
   const selectedIndexes = Array.from(checkboxes).map(cb => parseInt(cb.value, 10));
 
   if (selectedIndexes.length === 0) {
-    alert(t("selectAtLeastOne") || "Selecciona al menos una categoría");
+    alert(t("selectCategories", { n: 1 }));
     return;
   }
 
@@ -241,16 +248,13 @@ function endGame() {
 // ==========================================
 
 async function initApp() {
-  // 1. Cargar todos los módulos dinámicamente según la lista SUPPORTED_LANGS
+  // 1. Cargar módulos de idiomas dinámicamente
   await loadLanguages();
 
-  // 2. Establecer el idioma por defecto
+  // 2. Establecer el idioma por defecto y renderizar interfaz
   setLanguage("es");
 
-  // 3. Renderizar controles iniciales
-  renderCategorySelection();
-
-  // 4. Asignar Event Listeners
+  // 3. Asignar Event Listeners
   document.getElementById("btn-start")?.addEventListener("click", startGame);
   document.getElementById("btn-pause")?.addEventListener("click", togglePause);
   document.getElementById("btn-new-game")?.addEventListener("click", endGame);
@@ -259,7 +263,6 @@ async function initApp() {
   if (langSelect) {
     langSelect.addEventListener("change", (e) => {
       setLanguage(e.target.value);
-      renderCategorySelection();
     });
   }
 }
