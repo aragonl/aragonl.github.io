@@ -1,4 +1,14 @@
-import { categoriesData } from "./words.js";
+import { categoriesData as categoriesES } from "./palabras-es.js";
+import { categoriesData as categoriesEN } from "./palabras-en.js";
+import { categoriesData as categoriesIT } from "./palabras-it.js";
+
+// Agruparlos en un objeto para acceder por código de idioma
+const allCategories = {
+  es: categoriesES,
+  en: categoriesEN,
+  it: categoriesIT
+};
+
 import { textES, EMOJI_MAP_ES } from "./texto-es.js";
 import { textIT, EMOJI_MAP_IT } from "./texto-it.js";
 import { textEN, EMOJI_MAP_EN } from "./texto-en.js";
@@ -257,7 +267,8 @@ function renderPlayerConfig() {
 }
 
 function renderCategorySelection() {
-  const cats = categoriesData[state.lang] || categoriesData.es || [];
+  // Busca en el objeto global según el idioma actual, o cae a 'es' si no existe
+  const cats = allCategories[state.lang] || allCategories.es || [];
   if (!dom.categoriesContainer) return;
   dom.categoriesContainer.innerHTML = "";
   
@@ -292,7 +303,8 @@ function updateCategoryCount() {
 }
 
 function selectRandomCategories() {
-  const cats = categoriesData[state.lang] || categoriesData.es || [];
+  // Busca en el objeto global según el idioma actual, o cae a 'es' si no existe
+  const cats = allCategories[state.lang] || allCategories.es || [];
   const count = parseInt(dom.configCatCount.value, 10) || state.targetCount;
   const shuffled = shuffle(cats);
   state.selectedCategoryIds.clear();
@@ -322,7 +334,8 @@ function startGame() {
   }
   if (dom.startError) dom.startError.textContent = "";
 
-  const cats = categoriesData[state.lang] || categoriesData.es || [];
+  // Busca en el objeto global según el idioma actual, o cae a 'es' si no existe
+  const cats = allCategories[state.lang] || allCategories.es || [];
   state.activeCategories = cats.filter(c => state.selectedCategoryIds.has(c.id));
   state.roundCount = parseInt(dom.roundTotalInput.value, 10) || 3;
   state.turnTimeLimit = parseInt(dom.turnTimeInput.value, 10) || 120;
