@@ -57,6 +57,7 @@ async function loadLanguage(lang) {
 function updateUIElements() {
   const setText = (id, val) => { const el = $(id); if (el && val !== undefined) el.textContent = val; };
 
+  setText("title", "YHWH");
   setText("subtitle", TEXT.subtitle);
   setText("start-title", t("startTitle"));
   setText("player-colors-title", t("playerColorsTitle") || "Nombres y colores de los jugadores");
@@ -244,10 +245,11 @@ function applyLiveConfigChanges() {
 }
 
 function init() {
+  // Eventos para el modal de Información/Reglas
   $("info-btn")?.addEventListener("click", openRules);
   $("close-rules")?.addEventListener("click", closeRules);
 
-  // Funcionalidad agregada: Abrir / Cerrar el panel de configuración al tocar el botón ⚙️
+  // Abrir / Cerrar el panel de configuración al tocar ⚙️
   $("config-btn")?.addEventListener("click", () => {
     $("config-panel")?.classList.toggle("hidden");
   });
