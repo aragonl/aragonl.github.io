@@ -248,9 +248,11 @@ function init() {
   $("close-rules")?.addEventListener("click", closeRules);
 
   document.addEventListener("click", (e) => {
-    const btn = e.target.closest("#config-btn");
-    if (btn) {
-      $("config-panel")?.classList.toggle("hidden");
+    if (e.target.closest("#config-btn")) {
+      const panel = $("config-panel");
+      if (panel) {
+        panel.classList.toggle("hidden");
+      }
     }
   });
 
@@ -454,9 +456,14 @@ function randomCategories() {
 
 function moveHeaderControlsToGame() {
   const startControls = document.querySelector("#screen-start .header-controls-right");
+  const configPanel = $("config-panel");
   const inGameTarget = $("in-game-header-controls");
+
   if (startControls && inGameTarget) {
     inGameTarget.appendChild(startControls);
+  }
+  if (configPanel && inGameTarget) {
+    inGameTarget.appendChild(configPanel);
   }
 }
 
@@ -917,10 +924,9 @@ function startComputerReveal(type = "computer", word = null, winnerName = null, 
   } else if (type === "guessed") {
     titleText = t("guessedWordTitle") || "¡Palabra Adivinada!";
     const pointsStr = formatPoints(points);
-    const translatedMsg = typeof t("pointsForPlayer") === "function" 
-      ? t("pointsForPlayer", { name: winnerName }) 
-      : (t("pointsForPlayer") ? t("pointsForPlayer").replace("{name}", winnerName) : `Puntos para ${winnerName}`);
-    badgeText = `${pointsStr} ${translatedMsg}`;
+    let rawText = t("pointsForPlayer", { name: winnerName }) || `Puntos para ${winnerName}`;
+    rawText = rawText.replace(/\{name\}/g, winnerName || "");
+    badgeText = `${pointsStr} ${rawText}`;
 
     if (badgeEl && winnerIndex !== null && state.playerColors[winnerIndex]) {
       badgeEl.style.background = state.playerColors[winnerIndex];
