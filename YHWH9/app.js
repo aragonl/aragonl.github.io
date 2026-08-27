@@ -247,17 +247,9 @@ function init() {
   $("info-btn")?.addEventListener("click", openRules);
   $("close-rules")?.addEventListener("click", closeRules);
 
-  document.addEventListener("click", (e) => {
-    if (e.target.closest("#config-btn")) {
-      const panel = $("config-panel");
-      if (panel) {
-        panel.classList.toggle("hidden");
-      }
-    }
-  });
-
-  $("close-config")?.addEventListener("click", () => {
-    $("config-panel")?.classList.add("hidden");
+  // Funcionalidad agregada: Abrir / Cerrar el panel de configuración al tocar el botón ⚙️
+  $("config-btn")?.addEventListener("click", () => {
+    $("config-panel")?.classList.toggle("hidden");
   });
 
   const langScroll = $("lang-scroll");
@@ -496,8 +488,6 @@ function startGame() {
   state.guessedWordParts = [];
   state.guessedCategory = false;
   state.revealType = "initial";
-
-  $("config-panel")?.classList.add("hidden");
 
   $("screen-start")?.classList.add("hidden");
   $("screen-game")?.classList.remove("hidden");
