@@ -57,7 +57,6 @@ async function loadLanguage(lang) {
 function updateUIElements() {
   const setText = (id, val) => { const el = $(id); if (el && val !== undefined) el.textContent = val; };
 
-  setText("title", "YHWH");
   setText("subtitle", TEXT.subtitle);
   setText("start-title", t("startTitle"));
   setText("player-colors-title", t("playerColorsTitle") || "Nombres y colores de los jugadores");
@@ -79,6 +78,7 @@ function updateUIElements() {
   setText("feedback-continue", t("continue"));
   setText("submit-guess", t("guess"));
 
+  // Actualización dinámica de las reglas de juego según el idioma
   if (TEXT.rulesTitle && $("rules-title")) $("rules-title").textContent = TEXT.rulesTitle;
   if (TEXT.closeRules && $("close-rules")) $("close-rules").textContent = TEXT.closeRules;
   
@@ -245,11 +245,9 @@ function applyLiveConfigChanges() {
 }
 
 function init() {
-  // Eventos para el modal de Información/Reglas
   $("info-btn")?.addEventListener("click", openRules);
   $("close-rules")?.addEventListener("click", closeRules);
 
-  // Abrir / Cerrar el panel de configuración al tocar ⚙️
   $("config-btn")?.addEventListener("click", () => {
     $("config-panel")?.classList.toggle("hidden");
   });
@@ -278,8 +276,13 @@ function init() {
     });
   }
 
-  $("turn-time")?.addEventListener("input", applyLiveConfigChanges);
-  $("round-total")?.addEventListener("input", applyLiveConfigChanges);
+  $("turn-time")?.addEventListener("input", () => {
+    applyLiveConfigChanges();
+  });
+
+  $("round-total")?.addEventListener("input", () => {
+    applyLiveConfigChanges();
+  });
 
   $("config-cat-count")?.addEventListener("input", () => {
     renderCategorySelection();
@@ -452,6 +455,14 @@ function randomCategories() {
   renderCategorySelection();
 }
 
+function moveHeaderControlsToGame() {
+  const startControls = document.querySelector("#screen-start .header-controls-right");
+  const inGameTarget = $("in-game-header-controls");
+  if (startControls && inGameTarget) {
+    inGameTarget.appendChild(startControls);
+  }
+}
+
 function startGame() {
   const players = Number($("players")?.value) || 1;
 
@@ -491,6 +502,7 @@ function startGame() {
   state.guessedCategory = false;
   state.revealType = "initial";
 
+  moveHeaderControlsToGame();
   $("screen-start")?.classList.add("hidden");
   $("screen-game")?.classList.remove("hidden");
   renderBoard();
@@ -897,6 +909,7 @@ function startComputerReveal(type = "computer", word = null, winnerName = null, 
   let badgeText = t("computer");
   const badgeEl = $("computer-badge");
 
+  // Restablecer estilos previos del badge
   if (badgeEl) {
     badgeEl.style.background = "";
     badgeEl.style.color = "";
@@ -908,8 +921,8 @@ function startComputerReveal(type = "computer", word = null, winnerName = null, 
   } else if (type === "guessed") {
     titleText = t("guessedWordTitle") || "¡Palabra Adivinada!";
     const pointsStr = formatPoints(points);
-    const labelPuntos = t("pointsForPlayer") || "puntos para";
-    badgeText = `${pointsStr} ${labelPuntos} ${winnerName || ""}`;
+    const translatedMsg = t("pointsForPlayer", { name: winnerName }) || `Puntos para ${winnerName}`;
+    badgeText = `${pointsStr} ${translatedMsg}`;
 
     if (badgeEl && winnerIndex !== null && state.playerColors[winnerIndex]) {
       badgeEl.style.background = state.playerColors[winnerIndex];
