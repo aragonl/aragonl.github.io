@@ -16,6 +16,20 @@
     <p id="subtitle"></p>
   </header>
 
+        <div id="config-panel" class="config-panel hidden">
+          <button type="button" id="close-config" class="close-panel-btn" aria-label="Cerrar">✕</button>
+        <div class="settings-grid">
+          <label><span id="time-label"></span>
+            <input id="turn-time" type="number" min="10" max="3600" step="10" value="120">
+          </label>
+          <label><span id="rounds-label"></span>
+            <input id="round-total" type="number" min="1" max="20" value="3">
+          </label>
+          <label><span>Cantidad de categorías (sugeridas)</span>
+            <input id="config-cat-count" type="number" min="1" max="20" value="3">
+          </label>
+        </div>
+          
   <main id="app">
     <section id="screen-start" class="screen">
       <div class="start-top-bar">
@@ -40,19 +54,7 @@
         </div>
       </div>
 
-      <div id="config-panel" class="config-panel hidden">
-          <button type="button" id="close-config" class="close-panel-btn" aria-label="Cerrar">✕</button>
-        <div class="settings-grid">
-          <label><span id="time-label"></span>
-            <input id="turn-time" type="number" min="10" max="3600" step="10" value="120">
-          </label>
-          <label><span id="rounds-label"></span>
-            <input id="round-total" type="number" min="1" max="20" value="3">
-          </label>
-          <label><span>Cantidad de categorías (sugeridas)</span>
-            <input id="config-cat-count" type="number" min="1" max="20" value="3">
-          </label>
-        </div>
+
 
         <div class="player-color-selection">
           <h3 id="player-colors-title">Nombres y colores de los jugadores</h3>
