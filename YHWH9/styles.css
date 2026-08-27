@@ -125,11 +125,30 @@ main {
   margin-bottom: 20px;
 }
 #config-panel {
+  position: relative;
+  width: 100%;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* Ocultamiento */
+#config-panel.hidden {
+  display: none !important;
+}
+
+/* Botón de cierre en forma de X ubicado dentro del panel */
+#config-panel .close-panel-btn {
   position: absolute;
-  top: 100%;
-  right: 1rem;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  top: 0.5rem;
+  right: 0.5rem;
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
 }
 .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px; }
 label span { display: block; font-size: .88rem; color: var(--muted); margin-bottom: 6px; }
