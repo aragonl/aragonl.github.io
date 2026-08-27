@@ -78,10 +78,14 @@ function updateUIElements() {
   setText("feedback-continue", t("continue"));
   setText("submit-guess", t("guess"));
 
-  // Traducción dinámica del modal de reglas/info
+  // Actualización dinámica de las reglas de juego según el idioma
   if (TEXT.rulesTitle && $("rules-title")) $("rules-title").textContent = TEXT.rulesTitle;
-  if (TEXT.rulesBody && $("rules-body")) $("rules-body").innerHTML = TEXT.rulesBody;
   if (TEXT.closeRules && $("close-rules")) $("close-rules").textContent = TEXT.closeRules;
+  
+  const rulesContentEl = document.querySelector(".rules-content");
+  if (TEXT.rulesBody && rulesContentEl) {
+    rulesContentEl.innerHTML = TEXT.rulesBody;
+  }
 
   const rev1 = document.querySelector(".reveal-row:nth-child(1) .reveal-label");
   if (rev1) rev1.textContent = t("revealCategoryLabel");
@@ -230,6 +234,16 @@ function flattenData() {
   return result;
 }
 
+function applyLiveConfigChanges() {
+  state.turnTime = Math.max(10, Number($("turn-time")?.value) || 120);
+  state.rTot = Math.max(1, Number($("round-total")?.value) || 3);
+  
+  if ($("screen-game") && !$("screen-game").classList.contains("hidden")) {
+    updateRoundUI();
+    updateMaxGameTimeDisplay();
+  }
+}
+
 function init() {
   $("info-btn")?.addEventListener("click", openRules);
   $("close-rules")?.addEventListener("click", closeRules);
@@ -262,8 +276,13 @@ function init() {
     });
   }
 
-  $("turn-time")?.addEventListener("input", updateMaxGameTimeDisplay);
-  $("round-total")?.addEventListener("input", updateMaxGameTimeDisplay);
+  $("turn-time")?.addEventListener("input", () => {
+    applyLiveConfigChanges();
+  });
+
+  $("round-total")?.addEventListener("input", () => {
+    applyLiveConfigChanges();
+  });
 
   $("config-cat-count")?.addEventListener("input", () => {
     renderCategorySelection();
@@ -363,6 +382,10 @@ function renderPlayerColorSelection() {
     input.placeholder = `${t("player")} ${i + 1}`;
     input.addEventListener("input", (e) => {
       state.playerNames[i] = e.target.value.trim() || `${t("player")} ${i + 1}`;
+      if ($("screen-game") && !$("screen-game").classList.contains("hidden")) {
+        renderScoreboard();
+        updateRoundUI();
+      }
     });
 
     const colorPickerContainer = document.createElement("div");
@@ -376,6 +399,9 @@ function renderPlayerColorSelection() {
       btn.addEventListener("click", () => {
         state.playerColors[i] = color.value;
         renderPlayerColorSelection();
+        if ($("screen-game") && !$("screen-game").classList.contains("hidden")) {
+          renderScoreboard();
+        }
       });
       colorPickerContainer.appendChild(btn);
     });
@@ -670,7 +696,6 @@ function renderClue() {
   renderTimer();
 }
 
-// Botón "Revelar Pista": Finaliza la ronda si se revela completamente la palabra
 function revealHintManual() {
   if (!state.currentWord || state.gameOver) return;
 
@@ -884,9 +909,15 @@ function startComputerReveal(type = "computer", word = null, winnerName = null, 
   let badgeText = t("computer");
   const badgeEl = $("computer-badge");
 
-  if (type === "exhausted") {
-    titleText = t("revealedUnansweredTitle");
-    if (badgeEl) badgeEl.style.background = "";
+  // Restablecer estilos previos del badge
+  if (badgeEl) {
+    badgeEl.style.background = "";
+    badgeEl.style.color = "";
+  }
+
+  if (type === "exhausted" || type === "computer" || type === "initial") {
+    titleText = type === "exhausted" ? t("revealedUnansweredTitle") : t("specialRound");
+    badgeText = t("computer");
   } else if (type === "guessed") {
     titleText = t("guessedWordTitle") || "¡Palabra Adivinada!";
     const pointsStr = formatPoints(points);
