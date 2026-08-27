@@ -458,15 +458,6 @@ function randomCategories() {
   renderCategorySelection();
 }
 
-function moveHeaderControlsToGame() {
-  const startControls = document.querySelector("#screen-start .header-controls-right");
-  const inGameTarget = $("in-game-header-controls");
-
-  if (startControls && inGameTarget) {
-    inGameTarget.appendChild(startControls);
-  }
-}
-
 function startGame() {
   const players = Number($("players")?.value) || 1;
 
@@ -508,7 +499,6 @@ function startGame() {
 
   $("config-panel")?.classList.add("hidden");
 
-  moveHeaderControlsToGame();
   $("screen-start")?.classList.add("hidden");
   $("screen-game")?.classList.remove("hidden");
   renderBoard();
