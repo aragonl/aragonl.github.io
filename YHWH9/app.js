@@ -78,6 +78,7 @@ function updateUIElements() {
   setText("feedback-continue", t("continue"));
   setText("submit-guess", t("guess"));
 
+  // Traducción dinámica del modal de reglas/info
   if (TEXT.rulesTitle && $("rules-title")) $("rules-title").textContent = TEXT.rulesTitle;
   if (TEXT.rulesBody && $("rules-body")) $("rules-body").innerHTML = TEXT.rulesBody;
   if (TEXT.closeRules && $("close-rules")) $("close-rules").textContent = TEXT.closeRules;
@@ -93,6 +94,27 @@ function updateUIElements() {
 
   renderCategorySelection();
   renderPlayerColorSelection();
+  updateMaxGameTimeDisplay();
+}
+
+function calculateMaxGameTimeMinutes() {
+  const rTot = Math.max(1, Number($("round-total")?.value) || state.rTot);
+  const nJugadores = Number($("players")?.value) || state.players;
+  const tTurno = Math.max(10, Number($("turn-time")?.value) || state.turnTime);
+  const nCategorias = state.selectedCategories.length || (nJugadores + 1);
+
+  const totalSegundos = rTot * nJugadores * tTurno * nCategorias;
+  return Math.round(totalSegundos / 60);
+}
+
+function updateMaxGameTimeDisplay() {
+  const catCountEl = $("category-count");
+  if (!catCountEl) return;
+
+  const suggested = Number($("config-cat-count")?.value) || ((Number($("players")?.value) || 1) + 1);
+  const maxMin = calculateMaxGameTimeMinutes();
+
+  catCountEl.textContent = `Selecciona las categorías que entrarán en juego. (${suggested} sugeridas) | Tiempo máximo del juego: ${maxMin} min`;
 }
 
 function updateGameUIOnLangChange() {
@@ -236,11 +258,16 @@ function init() {
       ensurePlayerColorsAndNames();
       renderPlayerColorSelection();
       renderCategorySelection();
+      updateMaxGameTimeDisplay();
     });
   }
 
+  $("turn-time")?.addEventListener("input", updateMaxGameTimeDisplay);
+  $("round-total")?.addEventListener("input", updateMaxGameTimeDisplay);
+
   $("config-cat-count")?.addEventListener("input", () => {
     renderCategorySelection();
+    updateMaxGameTimeDisplay();
   });
 
   loadLanguage(currentLang).then(() => {
@@ -360,10 +387,6 @@ function renderPlayerColorSelection() {
 }
 
 function renderCategorySelection() {
-  const suggested = Number($("config-cat-count")?.value) || ((Number($("players")?.value) || 1) + 1);
-  const catCountEl = $("category-count");
-  if (catCountEl) catCountEl.textContent = `Selecciona las categorías que entrarán en juego. (${suggested} sugeridas)`;
-  
   const container = $("categories");
   if (!container) return;
   container.innerHTML = "";
@@ -387,6 +410,8 @@ function renderCategorySelection() {
     card.addEventListener("click", () => toggleCategory(index));
     container.appendChild(card);
   });
+
+  updateMaxGameTimeDisplay();
 }
 
 function toggleCategory(index) {
@@ -581,6 +606,21 @@ function renderScoreboard() {
   });
 }
 
+function getMaxVowelCount(wordStr) {
+  const parts = splitAnswer(wordStr);
+  let maxVowels = 0;
+  parts.forEach(part => {
+    const matches = part.match(/[A-ZÁÉÍÓÚÜÑ]{2,}(?:-[A-ZÁÉÍÓÚÜÑ]{2,})*/g);
+    if (matches) {
+      matches.forEach(m => {
+        const v = (m.match(/[AEIOUÁÉÍÓÚÜ]/g) || []).length;
+        if (v > maxVowels) maxVowels = v;
+      });
+    }
+  });
+  return maxVowels;
+}
+
 function renderClue() {
   const w = state.currentWord;
   if (!w) return;
@@ -630,29 +670,29 @@ function renderClue() {
   renderTimer();
 }
 
-// Botón "Revelar Pista": Asegura revelar siempre la pista siguiente
+// Botón "Revelar Pista": Finaliza la ronda si se revela completamente la palabra
 function revealHintManual() {
   if (!state.currentWord || state.gameOver) return;
 
-  let advanced = false;
-  const w = state.currentWord;
+  const maxVowels = getMaxVowelCount(state.currentWord.word);
+  const maxStages = 1 + Math.max(1, maxVowels);
 
-  // Secuencia: 0 -> Ayuda | 1 -> Subcategoría | 2+ -> Revelar vocales paulatinamente
-  if (state.currentClueRound === 0) {
-    state.currentClueRound = 1;
-    advanced = true;
-  } else if (state.currentClueRound === 1) {
-    state.currentClueRound = 2;
-    advanced = true;
-  } else {
-    state.currentClueRound++;
-    advanced = true;
+  if (state.currentClueRound >= maxStages) {
+    stopTimer();
+    state.primaryPlayer = (state.primaryPlayer + 1) % state.players;
+    startComputerReveal("exhausted", state.currentWord);
+    return;
   }
 
-  if (advanced) {
-    state.scores[state.currentPlayer] -= 1;
-    renderScoreboard();
-    renderClue();
+  state.currentClueRound++;
+  state.scores[state.currentPlayer] -= 1;
+  renderScoreboard();
+  renderClue();
+
+  if (state.currentClueRound >= maxStages) {
+    stopTimer();
+    state.primaryPlayer = (state.primaryPlayer + 1) % state.players;
+    startComputerReveal("exhausted", state.currentWord);
   }
 }
 
@@ -708,8 +748,9 @@ function submitGuess() {
     renderBoard();
     
     const winnerName = getPlayerName(state.currentPlayer);
+    const winnerIndex = state.currentPlayer;
     state.primaryPlayer = (state.primaryPlayer + 1) % state.players;
-    startComputerReveal("guessed", state.currentWord, winnerName);
+    startComputerReveal("guessed", state.currentWord, winnerName, awarded, winnerIndex);
     return;
   }
 
@@ -822,7 +863,7 @@ function renderTimer() {
   }
 }
 
-function startComputerReveal(type = "computer", word = null, winnerName = null) {
+function startComputerReveal(type = "computer", word = null, winnerName = null, points = 0, winnerIndex = null) {
   stopTimer();
   const available = state.words.filter(w => !state.usedWordIds.has(w.id));
   const revealWord = word || available[Math.floor(Math.random() * available.length)];
@@ -841,16 +882,25 @@ function startComputerReveal(type = "computer", word = null, winnerName = null) 
 
   let titleText = t("specialRound");
   let badgeText = t("computer");
+  const badgeEl = $("computer-badge");
 
   if (type === "exhausted") {
     titleText = t("revealedUnansweredTitle");
+    if (badgeEl) badgeEl.style.background = "";
   } else if (type === "guessed") {
     titleText = t("guessedWordTitle") || "¡Palabra Adivinada!";
-    badgeText = winnerName ? (t("pointsForPlayer", { name: winnerName }) || `Puntos para ${winnerName}`) : "¡Adivinada!";
+    const pointsStr = formatPoints(points);
+    const translatedMsg = t("pointsForPlayer", { name: winnerName }) || `Puntos para ${winnerName}`;
+    badgeText = `${pointsStr} ${translatedMsg}`;
+
+    if (badgeEl && winnerIndex !== null && state.playerColors[winnerIndex]) {
+      badgeEl.style.background = state.playerColors[winnerIndex];
+      badgeEl.style.color = "#ffffff";
+    }
   }
 
   if ($("reveal-title")) $("reveal-title").textContent = titleText;
-  if ($("computer-badge")) $("computer-badge").textContent = badgeText;
+  if (badgeEl) badgeEl.textContent = badgeText;
 }
 
 function continueAfterReveal() {
@@ -887,8 +937,10 @@ function renderBoard() {
   const container = $("board-categories");
   if (!container) return;
   container.innerHTML = "";
+  
+  const totalWordsToDiscover = 7 * state.selectedCategories.length;
   const countEl = $("discovered-count");
-  if (countEl) countEl.textContent = state.usedWordIds.size;
+  if (countEl) countEl.textContent = `${state.usedWordIds.size}/${totalWordsToDiscover}`;
 
   state.selectedCategories.forEach((index, selectedOrderIndex) => {
     const main = WORD_DATA[index];
