@@ -117,13 +117,7 @@ main {
   padding: 8px 10px;
 }
 
-.config-panel {
-  border: 1px dashed var(--line);
-  padding: 16px;
-  border-radius: 14px;
-  background: #faf8f3;
-  margin-bottom: 20px;
-}
+
 #config-panel {
   position: absolute;
   top: 100%;
