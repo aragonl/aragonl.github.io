@@ -25,41 +25,39 @@
       </div>
     </header>
 
-    <!-- Panel de Configuración Global -->
-    <div id="config-panel" class="config-panel hidden">
-      <button type="button" id="close-config" class="close-panel-btn" aria-label="Cerrar">✕</button>
-
-      <div class="config-row">
-        <div class="config-group">
-          <label id="players-label" for="players">Jugadores</label>
-          <select id="players"></select>
-        </div>
-
-        <div class="config-group">
-          <label id="time-label" for="turn-time">Tiempo por turno (s)</label>
-          <input type="number" id="turn-time" value="120" min="10" step="5" />
-        </div>
-
-        <div class="config-group">
-          <label id="rounds-label" for="round-total">Pistas máximas</label>
-          <input type="number" id="round-total" value="3" min="1" max="5" />
-        </div>
-
-        <div class="config-group">
-          <label for="config-cat-count">Categorías sugeridas</label>
-          <input type="number" id="config-cat-count" value="3" min="1" />
-        </div>
-      </div>
-
-      <div class="player-colors-section">
-        <h4 id="player-colors-title">Nombres y colores de los jugadores</h4>
-        <div id="player-colors" class="player-colors-grid"></div>
-      </div>
-    </div>
-
     <!-- PANTALLA INICIAL -->
     <div id="screen-start">
       <h2 id="start-title"></h2>
+
+      <!-- Panel de Configuración Global -->
+      <div id="config-panel" class="config-panel hidden">
+        <div class="config-row">
+          <div class="config-group">
+            <label id="players-label" for="players">Jugadores</label>
+            <select id="players"></select>
+          </div>
+
+          <div class="config-group">
+            <label id="time-label" for="turn-time">Tiempo por turno (s)</label>
+            <input type="number" id="turn-time" value="120" min="10" step="5" />
+          </div>
+
+          <div class="config-group">
+            <label id="rounds-label" for="round-total">Pistas máximas</label>
+            <input type="number" id="round-total" value="3" min="1" max="5" />
+          </div>
+
+          <div class="config-group">
+            <label for="config-cat-count">Categorías sugeridas</label>
+            <input type="number" id="config-cat-count" value="3" min="1" />
+          </div>
+        </div>
+
+        <div class="player-colors-section">
+          <h4 id="player-colors-title">Nombres y colores de los jugadores</h4>
+          <div id="player-colors" class="player-colors-grid"></div>
+        </div>
+      </div>
 
       <div class="categories-header">
         <h3 id="categories-title"></h3>
