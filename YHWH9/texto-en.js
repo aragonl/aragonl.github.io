@@ -70,7 +70,16 @@ export const TEXT = {
   revealHelpLabel: "Help / synonym",
   wordBlockCorrect: "You guessed the word.",
   wordPartialCorrect: "You guessed part of the word.",
-  categoryCorrect: "You guessed the category."
+  categoryCorrect: "You guessed the category.",
+  rulesTitle: "Game Rules",
+  closeRules: "Close",
+  rulesBody: `
+    <p>1. Try to guess the target word(s) and their category.</p>
+    <p>2. If you only guess the category or part of a compound word, you gain partial points and the turn moves to the next player.</p>
+    <p>3. Connectors and lowercase words are visible; you only need to guess words in UPPERCASE.</p>
+    <p>4. Clues and vowels will be revealed as rounds progress.</p>
+    <p>5. You can click "REVEAL HINT" to force an immediate clue for 1 point.</p>
+  `
 };
 
 export function t(key, vars = {}) {
