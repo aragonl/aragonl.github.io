@@ -78,7 +78,6 @@ function updateUIElements() {
   setText("feedback-continue", t("continue"));
   setText("submit-guess", t("guess"));
 
-  // Actualización dinámica de las reglas de juego según el idioma
   if (TEXT.rulesTitle && $("rules-title")) $("rules-title").textContent = TEXT.rulesTitle;
   if (TEXT.closeRules && $("close-rules")) $("close-rules").textContent = TEXT.closeRules;
   
@@ -248,8 +247,11 @@ function init() {
   $("info-btn")?.addEventListener("click", openRules);
   $("close-rules")?.addEventListener("click", closeRules);
 
-  $("config-btn")?.addEventListener("click", () => {
-    $("config-panel")?.classList.toggle("hidden");
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("#config-btn");
+    if (btn) {
+      $("config-panel")?.classList.toggle("hidden");
+    }
   });
 
   const langScroll = $("lang-scroll");
@@ -276,13 +278,8 @@ function init() {
     });
   }
 
-  $("turn-time")?.addEventListener("input", () => {
-    applyLiveConfigChanges();
-  });
-
-  $("round-total")?.addEventListener("input", () => {
-    applyLiveConfigChanges();
-  });
+  $("turn-time")?.addEventListener("input", applyLiveConfigChanges);
+  $("round-total")?.addEventListener("input", applyLiveConfigChanges);
 
   $("config-cat-count")?.addEventListener("input", () => {
     renderCategorySelection();
@@ -909,7 +906,6 @@ function startComputerReveal(type = "computer", word = null, winnerName = null, 
   let badgeText = t("computer");
   const badgeEl = $("computer-badge");
 
-  // Restablecer estilos previos del badge
   if (badgeEl) {
     badgeEl.style.background = "";
     badgeEl.style.color = "";
@@ -921,7 +917,9 @@ function startComputerReveal(type = "computer", word = null, winnerName = null, 
   } else if (type === "guessed") {
     titleText = t("guessedWordTitle") || "¡Palabra Adivinada!";
     const pointsStr = formatPoints(points);
-    const translatedMsg = t("pointsForPlayer", { name: winnerName }) || `Puntos para ${winnerName}`;
+    const translatedMsg = typeof t("pointsForPlayer") === "function" 
+      ? t("pointsForPlayer", { name: winnerName }) 
+      : (t("pointsForPlayer") ? t("pointsForPlayer").replace("{name}", winnerName) : `Puntos para ${winnerName}`);
     badgeText = `${pointsStr} ${translatedMsg}`;
 
     if (badgeEl && winnerIndex !== null && state.playerColors[winnerIndex]) {
