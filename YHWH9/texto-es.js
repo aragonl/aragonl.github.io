@@ -1,5 +1,6 @@
 export const EMOJI_MAP = {
   "corazon": "❤️",
+  "corazón": "❤️",
   "prohibido": "🚫",
   "amor": "❤️",
   "amar": "❤️"
