@@ -117,39 +117,41 @@ main {
   padding: 8px 10px;
 }
 
+
+
 .config-panel {
+  /* Tus estilos actuales */
   border: 1px dashed var(--line);
   padding: 16px;
   border-radius: 14px;
   background: #faf8f3;
   margin-bottom: 20px;
-}
-#config-panel {
-  position: relative;
+
+  /* Estilos para el posicionamiento y flujo vertical */
+  position: relative; /* Permite posicionar la X adentro */
   width: 100%;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  padding: 1rem;
+  margin-top: 16px;
   box-sizing: border-box;
 }
 
-/* Ocultamiento */
-#config-panel.hidden {
+/* Ocultamiento del panel */
+.config-panel.hidden {
   display: none !important;
 }
 
-/* Botón de cierre en forma de X ubicado dentro del panel */
-#config-panel .close-panel-btn {
+/* Estilo para la X de cierre adentro del panel */
+.config-panel .close-panel-btn {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
+  top: 12px;
+  right: 12px;
   background: transparent;
   border: none;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: bold;
   cursor: pointer;
   line-height: 1;
 }
+
 .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px; }
 label span { display: block; font-size: .88rem; color: var(--muted); margin-bottom: 6px; }
 input, select, button {
