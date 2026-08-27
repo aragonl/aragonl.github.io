@@ -35,6 +35,7 @@ export const TEXT = {
   categoryOnly: "Has acertado la categoría, pero no la palabra.",
   wordOnlyPoints: "Has acertado la palabra. +{points} puntos.",
   categoryOnlyPoints: "Has acertado la categoría. +{points} puntos.",
+  pointsForPlayer:"puntos para",
   compoundOneOnly: "Has acertado una de las dos palabras. +la mitad del puntaje.",
   compoundWordsButCategory: "Has acertado las dos palabras, pero no la categoría. +{points} puntos.",
   partialPoints: "Acierto parcial. +{points} puntos.",
