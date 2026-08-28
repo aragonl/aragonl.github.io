@@ -24,9 +24,9 @@ const state = {
   scores: [],
   timerId: null,
   paused: false,
-  selectedGuessCategory: "",
+  selectedGuessSubcategory: "",
   guessedWordParts: [],
-  guessedCategory: false,
+  guessedSubcategory: false,
   remainingSeconds: 120,
   gameOver: false,
   playerColors: [],
@@ -78,7 +78,6 @@ function updateUIElements() {
   setText("feedback-continue", t("continue"));
   setText("submit-guess", t("guess"));
 
-  // Actualización dinámica de las reglas de juego según el idioma
   if (TEXT.rulesTitle && $("rules-title")) $("rules-title").textContent = TEXT.rulesTitle;
   if (TEXT.closeRules && $("close-rules")) $("close-rules").textContent = TEXT.closeRules;
   
@@ -86,15 +85,6 @@ function updateUIElements() {
   if (TEXT.rulesBody && rulesContentEl) {
     rulesContentEl.innerHTML = TEXT.rulesBody;
   }
-
-  const rev1 = document.querySelector(".reveal-row:nth-child(1) .reveal-label");
-  if (rev1) rev1.textContent = t("revealCategoryLabel");
-  const rev2 = document.querySelector(".reveal-row:nth-child(2) .reveal-label");
-  if (rev2) rev2.textContent = t("revealFortextLabel");
-  const rev3 = document.querySelector(".reveal-row:nth-child(3) .reveal-label");
-  if (rev3) rev3.textContent = t("revealWordLabel");
-  const rev4 = document.querySelector(".reveal-row:nth-child(4) .reveal-label");
-  if (rev4) rev4.textContent = t("revealHelpLabel");
 
   renderCategorySelection();
   renderPlayerColorSelection();
@@ -132,7 +122,7 @@ function updateGameUIOnLangChange() {
 
   const selectedSet = new Set(state.selectedCategories);
   state.words = flattenData().filter(w => {
-    const categoryIndex = WORD_DATA.findIndex(c => c.category === w.mainCategory);
+    const categoryIndex = WORD_DATA.findIndex(c => String(getVal(c.category)) === String(w.mainCategory));
     return selectedSet.has(categoryIndex);
   });
 
@@ -205,9 +195,17 @@ function revealVowels(s, count) {
   }).join("");
 }
 
+// Extrae el valor String si la entrada viene como un objeto { text: "..." }
+function getVal(val) {
+  if (val === null || val === undefined) return "";
+  if (typeof val === "object") return val.text || val.word || val.category || val.name || "";
+  return String(val);
+}
+
 function formatWordWithEmojis(text) {
-  if (!text) return "";
-  return String(text).replace(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+/g, m => {
+  const str = getVal(text);
+  if (!str) return "";
+  return str.replace(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+/g, m => {
     const isAllLowercase = m === m.toLowerCase();
     return (isAllLowercase && EMOJI_MAP && EMOJI_MAP[m]) ? EMOJI_MAP[m] : m;
   });
@@ -216,18 +214,30 @@ function formatWordWithEmojis(text) {
 function flattenData() {
   const result = [];
   WORD_DATA.forEach((main, mainIndex) => {
-    if (!main.words || !Array.isArray(main.words)) return;
-    main.words.forEach((sub, subIndex) => {
-      if (!sub.words || !Array.isArray(sub.words)) return;
-      sub.words.forEach((word, i) => {
+    const mainCatStr = getVal(main.category);
+    const mainFortext = getVal(main.fortext);
+    const subList = main.words || main.subcategories || [];
+
+    if (!Array.isArray(subList)) return;
+
+    subList.forEach((sub, subIndex) => {
+      const subCatStr = getVal(sub.category);
+      const wordList = sub.words || [];
+
+      if (!Array.isArray(wordList)) return;
+
+      wordList.forEach((wordItem, i) => {
+        const wStr = getVal(wordItem);
+        const hStr = getVal(sub.help?.[i]);
+
         result.push({
           id: `${mainIndex}-${subIndex}-${i}`,
-          mainCategory: main.category,
-          difficulty: main.dificultad,
-          fortext: main.fortext,
-          subcategory: sub.category,
-          word,
-          help: sub.help?.[i] ?? "",
+          mainCategory: mainCatStr,
+          difficulty: main.dificultad || 1,
+          fortext: mainFortext,
+          subcategory: subCatStr,
+          word: wStr,
+          help: hStr,
           PN: sub.PN ?? true
         });
       });
@@ -236,208 +246,16 @@ function flattenData() {
   return result;
 }
 
-function applyLiveConfigChanges() {
-  state.turnTime = Math.max(10, Number($("turn-time")?.value) || 120);
-  state.rTot = Math.max(1, Number($("round-total")?.value) || 3);
-  
-  if ($("screen-game") && !$("screen-game").classList.contains("hidden")) {
-    updateRoundUI();
-    updateMaxGameTimeDisplay();
-  }
-}
-
-function init() {
-  $("info-btn")?.addEventListener("click", openRules);
-  $("close-rules")?.addEventListener("click", closeRules);
-
-  $("config-btn")?.addEventListener("click", () => {
-    $("config-panel")?.classList.toggle("hidden");
-  });
-
-  const langScroll = $("lang-scroll");
-  if (langScroll) {
-    langScroll.value = currentLang;
-    langScroll.addEventListener("change", async (e) => {
-      currentLang = e.target.value;
-      await loadLanguage(currentLang);
-    });
-  }
-
-  const playersSelect = $("players");
-  if (playersSelect) {
-    playersSelect.addEventListener("change", () => {
-      const p = Number(playersSelect.value) || 1;
-      const catInput = $("config-cat-count");
-      if (catInput) {
-        catInput.value = p + 1;
-      }
-      ensurePlayerColorsAndNames();
-      renderPlayerColorSelection();
-      renderCategorySelection();
-      updateMaxGameTimeDisplay();
-    });
-  }
-
-  $("turn-time")?.addEventListener("input", () => {
-    applyLiveConfigChanges();
-  });
-
-  $("round-total")?.addEventListener("input", () => {
-    applyLiveConfigChanges();
-  });
-
-  $("config-cat-count")?.addEventListener("input", () => {
-    renderCategorySelection();
-    updateMaxGameTimeDisplay();
-  });
-
-  loadLanguage(currentLang).then(() => {
-    renderPlayerColorSelection();
-    renderCategorySelection();
-    renderGuessInputs();
-  });
-
-  $("random-categories")?.addEventListener("click", randomCategories);
-  $("start-game")?.addEventListener("click", startGame);
-  $("submit-guess")?.addEventListener("click", submitGuess);
-  $("reveal-hint-btn")?.addEventListener("click", revealHintManual);
-  $("pause-time")?.addEventListener("click", togglePause);
-  $("feedback-continue")?.addEventListener("click", continueFeedback);
-  $("continue-reveal")?.addEventListener("click", continueAfterReveal);
-  $("new-game")?.addEventListener("click", () => location.reload());
-}
-
-function updatePlayersOptions() {
-  const playersSelect = $("players");
-  if (!playersSelect) return;
-  const currentVal = playersSelect.value || 2;
-  playersSelect.innerHTML = "";
-  const maxPlayers = Math.max(1, WORD_DATA.length - 1);
-  for (let i = 1; i <= maxPlayers; i++) {
-    const opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = i;
-    playersSelect.appendChild(opt);
-  }
-  playersSelect.value = Math.min(currentVal, maxPlayers);
-}
-
-function openRules() { $("rules-modal")?.classList.remove("hidden"); }
-function closeRules() { $("rules-modal")?.classList.add("hidden"); }
-
-const CATEGORY_COLORS = [
-  "#ffd6d6", "#ffe3b3", "#fff3b0", "#d9f2d9", "#cfe6ff", "#e4d4ff", "#ffd5eb", "#d7f5f0", "#e7e7e7", "#f4d6b8"
-];
-const PLAYER_COLORS = [
-  { name: "rojo", value: "#d62828" },
-  { name: "naranja", value: "#f77f00" },
-  { name: "amarillo", value: "#e9c46a" },
-  { name: "verde", value: "#2a9d8f" },
-  { name: "azul", value: "#4f7fc1" },
-  { name: "violeta", value: "#9b59d0" },
-  { name: "rosado", value: "#e76f9f" }
-];
-
-function categoryColor(index) {
-  return CATEGORY_COLORS[index % CATEGORY_COLORS.length];
-}
-
-function ensurePlayerColorsAndNames() {
-  const n = Number($("players")?.value) || 1;
-  while (state.playerColors.length < n) state.playerColors.push(null);
-  while (state.playerNames.length < n) state.playerNames.push("");
-  
-  state.playerColors.length = n;
-  state.playerNames.length = n;
-  
-  const used = new Set(state.playerColors.filter(Boolean));
-  for (let i = 0; i < n; i++) {
-    if (!state.playerColors[i]) {
-      const available = PLAYER_COLORS.map(x => x.value).filter(c => !used.has(c));
-      state.playerColors[i] = available.length ? available[0] : PLAYER_COLORS[Math.floor(Math.random() * PLAYER_COLORS.length)].value;
-      used.add(state.playerColors[i]);
-    }
-    if (!state.playerNames[i]) {
-      state.playerNames[i] = `${t("player")} ${i + 1}`;
-    }
-  }
-}
-
-function getPlayerName(index) {
-  return state.playerNames[index] || `${t("player")} ${index + 1}`;
-}
-
-function renderPlayerColorSelection() {
-  ensurePlayerColorsAndNames();
-  const box = $("player-colors");
-  if (!box) return;
-  const n = Number($("players")?.value) || 1;
-  box.innerHTML = "";
-  
-  for (let i = 0; i < n; i++) {
-    const card = document.createElement("div");
-    card.className = "player-card-edit";
-
-    const input = document.createElement("input");
-    input.type = "text";
-    input.value = state.playerNames[i];
-    input.placeholder = `${t("player")} ${i + 1}`;
-    input.addEventListener("input", (e) => {
-      state.playerNames[i] = e.target.value.trim() || `${t("player")} ${i + 1}`;
-      if ($("screen-game") && !$("screen-game").classList.contains("hidden")) {
-        renderScoreboard();
-        updateRoundUI();
-      }
-    });
-
-    const colorPickerContainer = document.createElement("div");
-    colorPickerContainer.className = "player-color-picker";
-
-    PLAYER_COLORS.forEach(color => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = `color-option ${state.playerColors[i] === color.value ? "selected" : ""}`;
-      btn.style.background = color.value;
-      btn.addEventListener("click", () => {
-        state.playerColors[i] = color.value;
-        renderPlayerColorSelection();
-        if ($("screen-game") && !$("screen-game").classList.contains("hidden")) {
-          renderScoreboard();
-        }
-      });
-      colorPickerContainer.appendChild(btn);
-    });
-
-    card.appendChild(input);
-    card.appendChild(colorPickerContainer);
-    box.appendChild(card);
-  }
-}
-
-/**
- * Función que verifica recursivamente si un nodo de categoría tiene:
- * - Al menos 2 hijos (subcategorías).
- * - Que cada uno de esos 2 hijos tenga al menos 3 hijos/elementos (nietos).
- */
 function esCategoriaValidaParaSeleccion(cat) {
   if (!cat || typeof cat !== 'object') return false;
-  
-  // En la estructura del WORD_DATA las subcategorías están en la propiedad 'words'
-  const hijos = cat.words;
+  const hijos = cat.words || cat.subcategories;
   if (!Array.isArray(hijos) || hijos.length < 2) return false;
 
   for (const hijo of hijos) {
     if (!hijo || typeof hijo !== 'object') return false;
-    
-    // Obtener los nietos
     const nietos = hijo.words;
-    if (!Array.isArray(nietos)) {
-      if (typeof hijo === 'object' && Object.keys(hijo).length < 3) return false;
-    } else if (nietos.length < 3) {
-      return false;
-    }
+    if (Array.isArray(nietos) && nietos.length < 3) return false;
   }
-
   return true;
 }
 
@@ -447,7 +265,6 @@ function renderCategorySelection() {
   container.innerHTML = "";
 
   WORD_DATA.forEach((cat, index) => {
-    // Validar regla de 2 hijos y 3 nietos por cada hijo
     if (!esCategoriaValidaParaSeleccion(cat)) return;
 
     const selectedOrderIndex = state.selectedCategories.indexOf(index);
@@ -462,9 +279,9 @@ function renderCategorySelection() {
       card.style.setProperty("--selected-bg", assignedColor);
     }
 
-    card.innerHTML = `<h4>${escapeHtml(formatWordWithEmojis(cat.category))}</h4>
-      <span class="badge">Dificultad ${escapeHtml(cat.dificultad)}</span>
-      <p>${escapeHtml(cat.fortext)}</p>`;
+    card.innerHTML = `<h4>${escapeHtml(formatWordWithEmojis(getVal(cat.category)))}</h4>
+      <span class="badge">Dificultad ${escapeHtml(cat.dificultad || 1)}</span>
+      <p>${escapeHtml(getVal(cat.fortext))}</p>`;
     card.addEventListener("click", () => toggleCategory(index));
     container.appendChild(card);
   });
@@ -481,8 +298,6 @@ function toggleCategory(index) {
 
 function randomCategories() {
   const n = Number($("config-cat-count")?.value) || ((Number($("players")?.value) || 1) + 1);
-  
-  // Obtener solo índices de categorías válidas según el criterio de 2 hijos y 3 nietos
   const indicesValidos = [...WORD_DATA.keys()].filter(idx => esCategoriaValidaParaSeleccion(WORD_DATA[idx]));
 
   state.selectedCategories = indicesValidos
@@ -513,7 +328,7 @@ function startGame() {
 
   const selectedSet = new Set(state.selectedCategories);
   state.words = flattenData().filter(w => {
-    const categoryIndex = WORD_DATA.findIndex(c => c.category === w.mainCategory);
+    const categoryIndex = WORD_DATA.findIndex(c => getVal(c.category) === w.mainCategory);
     return selectedSet.has(categoryIndex);
   });
 
@@ -527,16 +342,14 @@ function startGame() {
   state.usedWordIds.clear();
   state.currentRound = 0;
   state.currentClueRound = 0;
-  
   state.primaryPlayer = 0;
   state.currentPlayer = 0;
-  
   state.roundWordsCompleted = 0;
   state.gameOver = false;
   state.paused = false;
-  state.selectedGuessCategory = "";
+  state.selectedGuessSubcategory = "";
   state.guessedWordParts = [];
-  state.guessedCategory = false;
+  state.guessedSubcategory = false;
   state.revealType = "initial";
 
   moveHeaderControlsToGame();
@@ -561,9 +374,9 @@ function nextWord() {
   state.currentClueRound = 0;
   state.currentPlayer = state.primaryPlayer;
   
-  state.selectedGuessCategory = "";
+  state.selectedGuessSubcategory = "";
   state.guessedWordParts = [];
-  state.guessedCategory = false;
+  state.guessedSubcategory = false;
   hideFeedbackModal();
   renderGuessInputs();
   updateRoundUI();
@@ -572,7 +385,7 @@ function nextWord() {
 }
 
 function getAnswerParts(word) {
-  const raw = String(word ?? "");
+  const raw = getVal(word);
   const parts = splitAnswer(raw);
   const explicitTargets = [];
 
@@ -615,33 +428,41 @@ function renderGuessInputs() {
   }
 }
 
-function populateCategorySelect() {
+// Muestra las opciones de SUBCATEGORÍA para adivinar
+function populateSubcategorySelect() {
   const container = $("guess-categories");
   if (!container) return;
-  const current = state.selectedGuessCategory || "";
+  const current = state.selectedGuessSubcategory || "";
   container.innerHTML = "";
 
-  state.selectedCategories.forEach((index, selectedOrderIndex) => {
-    const cat = WORD_DATA[index];
-    if (!cat) return;
-    const assignedColor = categoryColor(selectedOrderIndex);
+  if (!state.currentWord) return;
 
-    const isCorrectCategory = state.guessedCategory &&
-      normalize(state.currentWord.mainCategory) === normalize(cat.category);
-    const isSelected = !state.guessedCategory && normalize(current) === normalize(cat.category);
+  // Buscar todas las subcategorías de la categoría principal actual
+  const mainObj = WORD_DATA.find(c => getVal(c.category) === state.currentWord.mainCategory);
+  if (!mainObj) return;
+
+  const subList = mainObj.words || mainObj.subcategories || [];
+
+  subList.forEach((subObj, idx) => {
+    const subName = getVal(subObj.category);
+    const assignedColor = categoryColor(idx);
+
+    const isCorrect = state.guessedSubcategory &&
+      normalize(state.currentWord.subcategory) === normalize(subName);
+    const isSelected = !state.guessedSubcategory && normalize(current) === normalize(subName);
 
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `category-choice ${isSelected || isCorrectCategory ? "selected" : ""}`;
+    btn.className = `category-choice ${isSelected || isCorrect ? "selected" : ""}`;
     btn.style.background = assignedColor;
     btn.style.setProperty("--category-choice-bg", assignedColor);
-    btn.textContent = formatWordWithEmojis(cat.category);
+    btn.textContent = formatWordWithEmojis(subName);
 
-    if (state.guessedCategory) btn.disabled = true;
+    if (state.guessedSubcategory) btn.disabled = true;
     btn.addEventListener("click", () => {
-      if (state.guessedCategory) return;
-      state.selectedGuessCategory = normalize(current) === normalize(cat.category) ? "" : cat.category;
-      populateCategorySelect();
+      if (state.guessedSubcategory) return;
+      state.selectedGuessSubcategory = normalize(current) === normalize(subName) ? "" : subName;
+      populateSubcategorySelect();
     });
     container.appendChild(btn);
   });
@@ -690,10 +511,10 @@ function renderClue() {
   if (!w) return;
 
   let stage = state.currentClueRound;
-  const raw = String(w.word);
+  const raw = getVal(w.word);
   const parts = splitAnswer(raw);
 
-  let vowelCount = stage >= 2 ? stage - 1 : 0;
+  let vowelCount = stage >= 1 ? stage : 0;
   let vowelBudget = vowelCount;
 
   const displayedParts = parts.map(part => {
@@ -717,19 +538,19 @@ function renderClue() {
   });
 
   const clues = [];
+  // Muestra fija de la categoría principal en la cabecera/interfaz
+  clues.push(`<span class="main-category-badge"><strong>Categoría:</strong> ${escapeHtml(formatWordWithEmojis(w.mainCategory))}</span>`);
+
   if (stage >= 0 && w.help) {
     clues.push(`<span class="hint-attention">${escapeHtml(t("hintHelp", { help: w.help }))}</span>`);
   }
-  if (stage >= 1 && w.subcategory && w.subcategory.trim() !== "") {
-    clues.push(`<span class="subcategory-attention">${escapeHtml(t("hintSubcategory", { category: w.subcategory }))}</span>`);
-  }
-  if (stage >= 2) {
+  if (stage >= 1) {
     clues.push(`<span class="hint-attention">${escapeHtml(t("hintVowel"))}</span>`);
   }
 
   if ($("attempt-status")) $("attempt-status").innerHTML = clues.join(" ");
   if ($("clue-stage")) $("clue-stage").textContent = displayedParts.join(" & ");
-  populateCategorySelect();
+  populateSubcategorySelect();
   updateRoundUI();
   renderTimer();
 }
@@ -738,7 +559,7 @@ function revealHintManual() {
   if (!state.currentWord || state.gameOver) return;
 
   const maxVowels = getMaxVowelCount(state.currentWord.word);
-  const maxStages = 1 + Math.max(1, maxVowels);
+  const maxStages = Math.max(1, maxVowels);
 
   if (state.currentClueRound >= maxStages) {
     stopTimer();
@@ -769,7 +590,7 @@ function submitGuess() {
 
   const guesses = getGuesses();
   const answers = getAnswerParts(state.currentWord.word);
-  const guessCategory = state.selectedGuessCategory || "";
+  const guessSubcat = state.selectedGuessSubcategory || "";
 
   const newlyCorrectParts = [];
   answers.forEach((answer, i) => {
@@ -779,15 +600,15 @@ function submitGuess() {
     }
   });
 
-  const categoryOK = !state.guessedCategory &&
-    normalize(guessCategory) !== "" &&
-    normalize(guessCategory) === normalize(state.currentWord.mainCategory);
+  const subcategoryOK = !state.guessedSubcategory &&
+    normalize(guessSubcat) !== "" &&
+    normalize(guessSubcat) === normalize(state.currentWord.subcategory);
 
   newlyCorrectParts.forEach(i => { state.guessedWordParts[i] = true; });
-  if (categoryOK) state.guessedCategory = true;
+  if (subcategoryOK) state.guessedSubcategory = true;
 
   const wordDone = state.guessedWordParts.length === answers.length && state.guessedWordParts.every(Boolean);
-  const allDone = wordDone && state.guessedCategory;
+  const allDone = wordDone && state.guessedSubcategory;
 
   const basePoints = Math.max(1, 2 * (state.rTot - state.currentClueRound));
   const blockPoints = basePoints / 2;
@@ -797,7 +618,7 @@ function submitGuess() {
   if (newlyCorrectParts.length > 0) {
     awarded += newlyCorrectParts.length * wordPartPoints;
   }
-  if (categoryOK) {
+  if (subcategoryOK) {
     awarded += blockPoints;
   }
 
@@ -817,7 +638,7 @@ function submitGuess() {
     return;
   }
 
-  if (categoryOK && !wordDone) {
+  if (subcategoryOK && !wordDone) {
     showFeedback(`${t("incorrectWordCorrectCategory")} +${formatPoints(awarded)} ${t("points")}.`, "partial", "partial");
     return;
   }
@@ -828,7 +649,7 @@ function submitGuess() {
       ? t("wordPartialCorrect")
       : t("wordBlockCorrect"));
 
-    if (state.guessedCategory) parts.push(t("categoryCorrect"));
+    if (state.guessedSubcategory) parts.push(t("categoryCorrect"));
     showFeedback(`${parts.join(" ")} +${formatPoints(awarded)} ${t("points")}.`, "partial", "partial");
     return;
   }
@@ -938,16 +759,15 @@ function startComputerReveal(type = "computer", word = null, winnerName = null, 
   $("game-active-panel")?.classList.add("hidden");
   $("reveal-in-column")?.classList.remove("hidden");
 
-  if ($("revealed-category")) $("revealed-category").textContent = `${formatWordWithEmojis(state.currentWord.mainCategory)} · ${state.currentWord.subcategory}`;
-  if ($("reveal-fortext")) $("reveal-fortext").textContent = state.currentWord.fortext || "";
+  if ($("revealed-category")) $("revealed-category").textContent = `${formatWordWithEmojis(state.currentWord.mainCategory)} · ${formatWordWithEmojis(state.currentWord.subcategory)}`;
+  if ($("reveal-fortext")) $("reveal-fortext").textContent = getVal(state.currentWord.fortext);
   if ($("revealed-word")) $("revealed-word").textContent = formatWordWithEmojis(state.currentWord.word);
-  if ($("reveal-help")) $("reveal-help").textContent = `"${state.currentWord.help}"` || "";
+  if ($("reveal-help")) $("reveal-help").textContent = `"${getVal(state.currentWord.help)}"` || "";
 
   let titleText = t("specialRound");
   let badgeText = t("computer");
   const badgeEl = $("computer-badge");
 
-  // Restablecer estilos previos del badge
   if (badgeEl) {
     badgeEl.style.background = "";
     badgeEl.style.color = "";
@@ -1014,6 +834,7 @@ function renderBoard() {
   state.selectedCategories.forEach((index, selectedOrderIndex) => {
     const main = WORD_DATA[index];
     if (!main) return;
+    const mainCatName = getVal(main.category);
     const assignedColor = categoryColor(selectedOrderIndex);
 
     const block = document.createElement("section");
@@ -1021,13 +842,13 @@ function renderBoard() {
     block.style.setProperty("--category-bg", assignedColor);
 
     const discovered = state.words.filter(w =>
-      w.mainCategory === main.category && state.usedWordIds.has(w.id)
+      w.mainCategory === mainCatName && state.usedWordIds.has(w.id)
     );
 
     block.innerHTML = `
       <div class="board-category-header">
-        <h3>${escapeHtml(formatWordWithEmojis(main.category))}</h3>
-        <span class="fortext">${escapeHtml(main.fortext)}</span>
+        <h3>${escapeHtml(formatWordWithEmojis(mainCatName))}</h3>
+        <span class="fortext">${escapeHtml(getVal(main.fortext))}</span>
       </div>
       <div class="word-list"></div>`;
 
@@ -1036,7 +857,7 @@ function renderBoard() {
       const chip = document.createElement("div");
       chip.className = "word-chip";
       chip.innerHTML = `<strong>${escapeHtml(formatWordWithEmojis(w.word))}</strong>
-        <small>${escapeHtml(w.subcategory)}</small>`;
+        <small>${escapeHtml(getVal(w.subcategory))}</small>`;
       list.appendChild(chip);
     });
     if (!discovered.length) list.innerHTML = `<span class="word-chip">—</span>`;
