@@ -869,9 +869,21 @@ function startComputerReveal(type = "computer", word = null, winnerName = null, 
   } else if (type === "guessed") {
     titleText = t("guessedWordTitle") || "¡Palabra Adivinada!";
     const formattedPts = formatPoints(points);
-    badgeText = winnerName 
-      ? (t("pointsForPlayer", { name: winnerName, points: formattedPts }) || `+${formattedPts} puntos para ${winnerName}`) 
-      : "¡Adivinada!";
+    
+    // 1. Intentamos obtener la plantilla traducida pasándole los datos
+    let translatedBadge = t("pointsForPlayer", { name: winnerName, points: formattedPts, n: winnerName, pts: formattedPts });
+
+    // 2. Si la traducción no hizo el reemplazo (mantiene llaves o devuelve el texto sin variables), reemplazamos manualmente los marcadores habituales
+    if (translatedBadge && winnerName) {
+      translatedBadge = translatedBadge
+        .replace(/\{name\}|\{nombre\}|\{player\}|\{jugador\}|\{n\}/gi, winnerName)
+        .replace(/\{points\}|\{puntos\}|\{pts\}/gi, formattedPts);
+    }
+
+    // 3. Si no existe la traducción, usamos el texto formateado por defecto
+    badgeText = (winnerName && translatedBadge) 
+      ? translatedBadge 
+      : `+${formattedPts} ${t("points")} para ${winnerName}`;
   }
 
   if ($("reveal-title")) $("reveal-title").textContent = titleText;
