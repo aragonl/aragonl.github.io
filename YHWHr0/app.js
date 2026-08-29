@@ -1,5 +1,5 @@
 // =============================================================================
-// CARGA DINÁMICA DE IDIOMAS (ES, IT, EN, ETC.)
+// CARGA DINÁMICA DE IDIOMAS Y TRADUCCIONES
 // =============================================================================
 let TEXT = {};
 let WORD_DATA = [];
@@ -27,7 +27,7 @@ async function loadLanguage(langCode) {
 }
 
 // =============================================================================
-// ESTADO Y LÓGICA DEL JUEGO
+// ESTADO GLOBAL DEL JUEGO
 // =============================================================================
 let state = {
   config: {
@@ -48,9 +48,13 @@ let state = {
   timeLeft: 0,
   isPaused: false,
   discoveredCount: 0,
-  hintsUsedForCurrentWord: 0, // Contador de pistas/vocales pedidas con el botón
-  revealedVowels: []
+  hintsUsedCount: 0,
+  revealedVowels: [],
+  activeHelpText: ""
 };
+
+const VOWELS = ["A", "E", "I", "O", "U", "Á", "É", "Í", "Ó", "Ú"];
+const COLOR_PALETTE = ["#e6194B", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4"];
 
 // =============================================================================
 // INICIALIZACIÓN
@@ -143,11 +147,6 @@ function setupPlayersDropdown() {
   renderPlayerColorPickers();
 }
 
-// =============================================================================
-// CONFIGURACIÓN DE JUGADORES Y COLORES (ESTÉTIKA ORIGINAL)
-// =============================================================================
-const COLOR_PALETTE = ["#e6194B", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4"];
-
 function renderPlayerColorPickers() {
   const container = document.getElementById("player-colors");
   if (!container) return;
@@ -194,7 +193,7 @@ function renderPlayerColorPickers() {
 }
 
 // =============================================================================
-// CATEGORÍAS EN INICIO (ORIGINAL CON TAGS Y ESTILOS)
+// SELECCIÓN DE CATEGORÍAS EN INICIO
 // =============================================================================
 function renderCategories() {
   const grid = document.getElementById("categories");
@@ -252,7 +251,7 @@ function selectRandomCategories() {
 }
 
 // =============================================================================
-// INICIO Y BARAJADO DE PARTIDA
+// INICIO DE PARTIDA Y CONTROLES EN CABECERA DE JUEGO
 // =============================================================================
 function startGame() {
   const errorEl = document.getElementById("start-error");
@@ -270,7 +269,7 @@ function startGame() {
   state.round = 1;
   state.discoveredCount = 0;
 
-  // Construir el mazo de palabras
+  // Montar deck de palabras
   state.deck = [];
   state.selectedCategoryIndices.forEach(catIdx => {
     const catGroup = WORD_DATA[catIdx];
@@ -291,6 +290,9 @@ function startGame() {
   state.deck.sort(() => 0.5 - Math.random());
   state.currentWordIndex = 0;
 
+  // Mover controles de cabecera a la pantalla de juego
+  setupInGameHeaderControls();
+
   document.getElementById("screen-start")?.classList.add("hidden");
   document.getElementById("screen-game")?.classList.remove("hidden");
 
@@ -299,8 +301,22 @@ function startGame() {
   loadTurn();
 }
 
+function setupInGameHeaderControls() {
+  const container = document.getElementById("in-game-header-controls");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const configBtn = document.getElementById("config-btn");
+  const infoBtn = document.getElementById("info-btn");
+  const langSelector = document.querySelector(".lang-selector");
+
+  if (configBtn) container.appendChild(configBtn);
+  if (infoBtn) container.appendChild(infoBtn);
+  if (langSelector) container.appendChild(langSelector);
+}
+
 // =============================================================================
-// LÓGICA DE TURNO Y PANTALLA DE JUEGO
+// LÓGICA DE TURNO
 // =============================================================================
 function getCurrentWord() {
   return state.deck[state.currentWordIndex];
@@ -313,8 +329,9 @@ function loadTurn() {
     return;
   }
 
-  state.hintsUsedForCurrentWord = 0;
+  state.hintsUsedCount = 0;
   state.revealedVowels = [];
+  state.activeHelpText = "";
 
   updateTurnUI();
   renderClueStage(wordObj);
@@ -351,12 +368,11 @@ function renderScoreboard() {
   });
 }
 
-// Conserva la lógica de visibilidad de consonantes y reemplazo de emojis
+// Renderizado de pista: NO imprime guiones para vocales faltantes
 function renderClueStage(wordObj) {
   const clueStage = document.getElementById("clue-stage");
   if (!clueStage) return;
 
-  const VOWELS = "AEIOUÁÉÍÓÚ";
   let displayed = "";
 
   for (let char of wordObj.originalWord) {
@@ -365,47 +381,54 @@ function renderClueStage(wordObj) {
       if (state.revealedVowels.includes(upperChar)) {
         displayed += char;
       } else {
-        displayed += "_";
+        displayed += ""; // Sin espacio ni guión
       }
     } else {
-      displayed += char; // Las consonantes, espacios y conectores se mantienen visibles
+      displayed += char; // Consonantes, minúsculas y símbolos se imprimen siempre
     }
   }
 
-  // Mapeo de Emojis
+  // Reemplazo de Emojis
   Object.keys(EMOJI_MAP).forEach(key => {
     const reg = new RegExp(key, "gi");
     displayed = displayed.replace(reg, EMOJI_MAP[key]);
   });
 
-  clueStage.textContent = displayed;
+  if (state.activeHelpText) {
+    displayed += `<br><small style="font-size: 0.4em; font-weight: normal; opacity: 0.85;">(${state.activeHelpText})</small>`;
+  }
+
+  clueStage.innerHTML = displayed;
 }
 
+// Solo genera casilleros para palabras completamente en MAYÚSCULAS
 function setupWordInputFields(wordObj) {
   const container = document.getElementById("guess-words");
   if (!container) return;
   container.innerHTML = "";
 
   const parts = wordObj.originalWord.split(" ");
-  parts.forEach((part, idx) => {
-    if (part === part.toUpperCase() && part.length > 1) {
+  let inputCount = 0;
+
+  parts.forEach((part) => {
+    const isUppercaseWord = /^[A-ZÁÉÍÓÚÑ]+$/.test(part) && part.length > 1;
+    if (isUppercaseWord) {
+      inputCount++;
       const input = document.createElement("input");
       input.type = "text";
       input.className = "guess-word-input";
-      input.placeholder = parts.length > 1 ? t("guessPartPlaceholder", { n: idx + 1 }) : t("guessPlaceholder");
-      input.dataset.index = idx;
+      input.placeholder = parts.length > 1 ? t("guessPartPlaceholder", { n: inputCount }) : t("guessPlaceholder");
       container.appendChild(input);
     }
   });
 }
 
-// CAMBIO SOLICITADO: Muestra las SUBCATEGORÍAS de la categoría correspondiente
+// Muestra las subcategorías asociadas a la palabra
 function setupSubcategoryChoices(wordObj) {
   const container = document.getElementById("guess-categories");
   if (!container) return;
   container.innerHTML = "";
 
-  // Obtener todas las subcategorías que pertenecen a la categoría actual
   const parentCat = wordObj.parentCategoryObj;
   const subcategories = parentCat.words.map(sub => sub.category);
 
@@ -422,7 +445,7 @@ function setupSubcategoryChoices(wordObj) {
 }
 
 // =============================================================================
-// REVELAR PISTA: HINT Y VOCALES (NUNCA REVELA LA SUBCATEGORÍA)
+// BOTÓN REVELAR PISTA (SISTEMA PROGRESIVO EN PANTALLA)
 // =============================================================================
 function handleRevealHintButton() {
   if (state.scores[state.currentPlayerIndex] > 0) {
@@ -433,17 +456,16 @@ function handleRevealHintButton() {
   const currentWordObj = getCurrentWord();
   if (!currentWordObj) return;
 
-  // Paso 1: Revela la pista (help) en el primer clic
-  if (state.hintsUsedForCurrentWord === 0 && currentWordObj.help) {
-    state.hintsUsedForCurrentWord++;
-    showFeedbackModal(t("hintHelp", { help: currentWordObj.help }));
+  // 1. Revela primero el texto de ayuda directo en pantalla
+  if (state.hintsUsedCount === 0 && currentWordObj.help) {
+    state.hintsUsedCount++;
+    state.activeHelpText = currentWordObj.help;
+    renderClueStage(currentWordObj);
     return;
   }
 
-  // Paso 2: Revela una vocal nueva no descubierta en los siguientes clics
-  const VOWELS = ["A", "E", "I", "O", "U", "Á", "É", "Í", "Ó", "Ú"];
+  // 2. Revela vocales progresivamente en los siguientes clics
   const unrevealedInWord = [];
-
   for (let char of currentWordObj.originalWord.toUpperCase()) {
     if (VOWELS.includes(char) && !state.revealedVowels.includes(char)) {
       if (!unrevealedInWord.includes(char)) {
@@ -455,16 +477,13 @@ function handleRevealHintButton() {
   if (unrevealedInWord.length > 0) {
     const randomVowel = unrevealedInWord[Math.floor(Math.random() * unrevealedInWord.length)];
     state.revealedVowels.push(randomVowel);
-    state.hintsUsedForCurrentWord++;
+    state.hintsUsedCount++;
     renderClueStage(currentWordObj);
-    showFeedbackModal(t("hintVowel") + ` (${randomVowel})`);
-  } else {
-    showFeedbackModal(currentWordObj.help ? t("hintHelp", { help: currentWordObj.help }) : "No hay más pistas.");
   }
 }
 
 // =============================================================================
-// VALIDACIÓN DE RESPUESTAS Y SUBCATEGORÍA
+// RESPUESTAS Y CAMBIO DE TURNO
 // =============================================================================
 function handleGuess() {
   const wordObj = getCurrentWord();
@@ -478,9 +497,10 @@ function handleGuess() {
 
   const uppercaseTargetParts = wordObj.originalWord
     .split(" ")
-    .filter(p => p === p.toUpperCase() && p.length > 1);
+    .filter(p => /^[A-ZÁÉÍÓÚÑ]+$/.test(p) && p.length > 1);
 
-  const isWordCorrect = uppercaseTargetParts.every((part, i) => part === userWords[i]);
+  const isWordCorrect = uppercaseTargetParts.length > 0 && 
+                        uppercaseTargetParts.every((part, i) => part === userWords[i]);
   const isSubcategoryCorrect = userSubcategory === wordObj.subCategory;
 
   if (isWordCorrect && isSubcategoryCorrect) {
@@ -491,11 +511,11 @@ function handleGuess() {
     renderBoard();
     showFeedbackModal(`${t("correct")} +3 ${t("points")}`);
     clearInterval(state.timer);
-    nextTurn(true);
+    nextTurn(true); // Pasa la palabra y cambia de jugador
   } else if (isWordCorrect && !isSubcategoryCorrect) {
     state.scores[state.currentPlayerIndex] += 2;
     showFeedbackModal(t("wordOnlyPoints", { points: 2 }));
-    nextTurn(false);
+    nextTurn(false); // Cambia al siguiente jugador
   } else if (!isWordCorrect && isSubcategoryCorrect) {
     state.scores[state.currentPlayerIndex] += 1;
     showFeedbackModal(t("categoryOnlyPoints", { points: 1 }));
@@ -510,6 +530,7 @@ function nextTurn(advanceWord = false) {
   if (advanceWord) {
     state.currentWordIndex++;
   }
+
   state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.config.playersCount;
 
   if (state.currentPlayerIndex === 0) {
@@ -524,7 +545,7 @@ function nextTurn(advanceWord = false) {
 }
 
 // =============================================================================
-// TEMPORIZADOR Y CONTROLES
+// TIMER Y TABLERO
 // =============================================================================
 function startTimer() {
   clearInterval(state.timer);
