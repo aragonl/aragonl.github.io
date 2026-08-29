@@ -612,10 +612,10 @@ function renderClue() {
   });
 
   const clues = [];
-  if (stage >= 0 && w.help) {
-    clues.push(`<span >${escapeHtml(t("hintHelp", { help: w.help }))}</span>`);
+  if (stage >= 1 && w.help) {
+    clues.push(`<span class="hint-attention">${escapeHtml(t("hintHelp", { help: w.help }))}</span>`);
   }
-  if (stage >= 1) {
+  if (stage >= 2) {
     clues.push(`<span class="hint-attention">${escapeHtml(t("hintVowel"))}</span>`);
   }
 
