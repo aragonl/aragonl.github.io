@@ -17,7 +17,8 @@ Para crear otra versión lingüística:
 1. Copia `palabras-es.js` a `palabras-it.js`.
 2. Traduce/adapta los datos.
 3. Copia `texto-es.js` a `texto-it.js`.
-4. En `app.js`, cambia los imports a los archivos del idioma correspondiente.
+4. Todos los archivos palabras-xx.js y texto-xx.js deben usar export const WORD_DATA = ... y export const TEXT =
+5. En `app.js`, cambia los imports a los archivos del idioma correspondiente.
 
 La lógica del juego no depende de un servidor.
 
