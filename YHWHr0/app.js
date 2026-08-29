@@ -613,12 +613,9 @@ function renderClue() {
 
   const clues = [];
   if (stage >= 0 && w.help) {
-    clues.push(`<span class="hint-attention">${escapeHtml(t("hintHelp", { help: w.help }))}</span>`);
+    clues.push(`<span >${escapeHtml(t("hintHelp", { help: w.help }))}</span>`);
   }
-  if (stage >= 1 && w.subcategory && w.subcategory.trim() !== "") {
-    clues.push(`<span class="subcategory-attention">${escapeHtml(t("hintSubcategory", { category: w.subcategory }))}</span>`);
-  }
-  if (stage >= 2) {
+  if (stage >= 1) {
     clues.push(`<span class="hint-attention">${escapeHtml(t("hintVowel"))}</span>`);
   }
 
