@@ -1,52 +1,77 @@
 // =============================================================================
-// ESTADO GLOBAL DE LA APLICACIÓN Y VARIABLES DE IDIOMA DINO
+// CARGA DINÁMICA DE IDIOMAS (ES, IT, EN, ETC.)
 // =============================================================================
-let currentTEXT = {};
-let currentWORD_DATA = [];
-let currentEMOJI_MAP = {};
+let TEXT = {};
+let WORD_DATA = [];
+let EMOJI_MAP = {};
 
-let currentGame = {
-  players: [],
-  currentPlayerIndex: 0,
-  roundTotal: 3,
-  currentRound: 1,
-  turnTime: 120,
-  selectedCategories: [],
-  wordsToGuess: [],
-  currentWordIndex: 0,
-  timerInterval: null,
-  timeLeft: 0,
-  isPaused: false,
-  discoveredCount: 0
-};
-
-// Función helper de traducción (reemplaza las llaves {var} por sus valores)
 export function t(key, vars = {}) {
-  let s = currentTEXT[key] ?? key;
+  let s = TEXT[key] ?? key;
   return s.replace(/\{([a-zA-Z0-9_]+)\}/g, (_, k) => vars[k] ?? `{${k}}`);
 }
 
-// =============================================================================
-// CARGA DINÁMICA DE IDIOMAS (ES, IT, EN, ETC.)
-// =============================================================================
 async function loadLanguage(langCode) {
   try {
-    // Importa dinámicamente según el código seleccionado
     const textModule = await import(`./texto-${langCode}.js`);
     const wordsModule = await import(`./palabras-${langCode}.js`);
 
-    currentTEXT = textModule.TEXT;
-    currentEMOJI_MAP = textModule.EMOJI_MAP || {};
-    currentWORD_DATA = wordsModule.WORD_DATA;
+    TEXT = textModule.TEXT;
+    EMOJI_MAP = textModule.EMOJI_MAP || {};
+    WORD_DATA = wordsModule.WORD_DATA;
 
     updateUIStaticTexts();
-    renderCategorySelection();
+    renderCategories();
   } catch (err) {
-    console.error(`Error al cargar los archivos para el idioma "${langCode}":`, err);
+    console.error(`Error al cargar el idioma ${langCode}:`, err);
   }
 }
 
-// Actualiza las etiquetas de la interfaz según el idioma cargado
+// =============================================================================
+// ESTADO Y LÓGICA DEL JUEGO
+// =============================================================================
+let state = {
+  config: {
+    playersCount: 2,
+    playerNames: ["Jugador 1", "Jugador 2"],
+    playerColors: ["#e6194B", "#3cb44b"],
+    turnTime: 120,
+    rounds: 3,
+    suggestedCatCount: 3
+  },
+  scores: [],
+  selectedCategoryIndices: [],
+  deck: [],
+  currentWordIndex: 0,
+  currentPlayerIndex: 0,
+  round: 1,
+  timer: null,
+  timeLeft: 0,
+  isPaused: false,
+  discoveredCount: 0,
+  hintsUsedForCurrentWord: 0, // Contador de pistas/vocales pedidas con el botón
+  revealedVowels: []
+};
+
+// =============================================================================
+// INICIALIZACIÓN
+// =============================================================================
+document.addEventListener("DOMContentLoaded", () => {
+  setupLanguageSelector();
+  setupEvents();
+  
+  const initialLang = document.getElementById("lang-scroll")?.value || "es";
+  loadLanguage(initialLang);
+});
+
+function setupLanguageSelector() {
+  const langSelect = document.getElementById("lang-scroll");
+  if (langSelect) {
+    langSelect.addEventListener("change", (e) => {
+      loadLanguage(e.target.value);
+    });
+  }
+}
+
 function updateUIStaticTexts() {
   const setTxt = (id, key) => {
     const el = document.getElementById(id);
@@ -69,153 +94,139 @@ function updateUIStaticTexts() {
   setTxt("close-rules", "closeRules");
 
   const rulesBody = document.querySelector(".rules-content");
-  if (rulesBody && currentTEXT.rulesBody) {
-    rulesBody.innerHTML = currentTEXT.rulesBody;
+  if (rulesBody && TEXT.rulesBody) {
+    rulesBody.innerHTML = TEXT.rulesBody;
   }
 }
 
-// =============================================================================
-// INICIALIZACIÓN Y EVENTOS
-// =============================================================================
-document.addEventListener("DOMContentLoaded", () => {
-  setupPlayersDropdown();
-  setupLanguageSelector();
-  setupEventListeners();
-
-  // Carga inicial (por defecto el idioma seleccionado en el HTML o 'es')
-  const initialLang = document.getElementById("lang-scroll")?.value || "es";
-  loadLanguage(initialLang);
-});
-
-function setupLanguageSelector() {
-  const langSelect = document.getElementById("lang-scroll");
-  if (langSelect) {
-    langSelect.addEventListener("change", (e) => {
-      loadLanguage(e.target.value);
-    });
-  }
-}
-
-function setupPlayersDropdown() {
-  const playersSelect = document.getElementById("players");
-  if (!playersSelect) return;
-  playersSelect.innerHTML = "";
-  for (let i = 1; i <= 6; i++) {
-    const opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = `${i}`;
-    playersSelect.appendChild(opt);
-  }
-  playersSelect.value = "2";
-  renderPlayerColorPickers(2);
-}
-
-function setupEventListeners() {
-  // Toggle del panel de configuración
+function setupEvents() {
   document.getElementById("config-btn")?.addEventListener("click", () => {
     document.getElementById("config-panel")?.classList.toggle("hidden");
   });
 
-  // Modal de reglas
   document.getElementById("info-btn")?.addEventListener("click", () => {
     document.getElementById("rules-modal")?.classList.remove("hidden");
   });
+
   document.getElementById("close-rules")?.addEventListener("click", () => {
     document.getElementById("rules-modal")?.classList.add("hidden");
   });
 
-  // Cambio de cantidad de jugadores
   document.getElementById("players")?.addEventListener("change", (e) => {
-    renderPlayerColorPickers(parseInt(e.target.value, 10));
+    state.config.playersCount = parseInt(e.target.value, 10);
+    renderPlayerColorPickers();
   });
 
-  // Selección aleatoria de categorías
   document.getElementById("random-categories")?.addEventListener("click", selectRandomCategories);
-
-  // Botón iniciar juego
   document.getElementById("start-game")?.addEventListener("click", startGame);
-
-  // Botones de juego
-  document.getElementById("submit-guess")?.addEventListener("click", handleGuessSubmit);
-  document.getElementById("reveal-hint-btn")?.addEventListener("click", handleRevealHint);
-  document.getElementById("pause-time")?.addEventListener("click", togglePauseTimer);
-  document.getElementById("continue-reveal")?.addEventListener("click", handleContinueAfterReveal);
+  document.getElementById("submit-guess")?.addEventListener("click", handleGuess);
+  document.getElementById("reveal-hint-btn")?.addEventListener("click", handleRevealHintButton);
+  document.getElementById("pause-time")?.addEventListener("click", togglePause);
+  document.getElementById("continue-reveal")?.addEventListener("click", continueAfterReveal);
   document.getElementById("feedback-continue")?.addEventListener("click", hideFeedbackModal);
-  document.getElementById("new-game")?.addEventListener("click", resetToStartScreen);
+  document.getElementById("new-game")?.addEventListener("click", resetGame);
+
+  setupPlayersDropdown();
+}
+
+function setupPlayersDropdown() {
+  const select = document.getElementById("players");
+  if (!select) return;
+  select.innerHTML = "";
+  for (let i = 1; i <= 6; i++) {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = i;
+    select.appendChild(opt);
+  }
+  select.value = "2";
+  renderPlayerColorPickers();
 }
 
 // =============================================================================
-// CONFIGURACIÓN DE JUGADORES Y COLORES
+// CONFIGURACIÓN DE JUGADORES Y COLORES (ESTÉTIKA ORIGINAL)
 // =============================================================================
 const COLOR_PALETTE = ["#e6194B", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4"];
 
-function renderPlayerColorPickers(count) {
+function renderPlayerColorPickers() {
   const container = document.getElementById("player-colors");
   if (!container) return;
   container.innerHTML = "";
 
-  for (let i = 0; i < count; i++) {
+  state.config.playerNames = [];
+  state.config.playerColors = [];
+
+  for (let i = 0; i < state.config.playersCount; i++) {
     const item = document.createElement("div");
     item.className = "player-color-item";
 
     const nameInput = document.createElement("input");
     nameInput.type = "text";
     nameInput.value = `${t("player")} ${i + 1}`;
-    nameInput.dataset.playerIndex = i;
+    
+    const colorPicker = document.createElement("div");
+    colorPicker.className = "player-color-picker";
 
-    const picker = document.createElement("div");
-    picker.className = "color-picker";
+    const defaultColor = COLOR_PALETTE[i % COLOR_PALETTE.length];
+    state.config.playerNames.push(nameInput.value);
+    state.config.playerColors.push(defaultColor);
 
-    COLOR_PALETTE.forEach((color, colorIdx) => {
+    COLOR_PALETTE.forEach((color) => {
       const opt = document.createElement("div");
-      opt.className = `color-option ${colorIdx === i % COLOR_PALETTE.length ? "selected" : ""}`;
+      opt.className = `color-option ${color === defaultColor ? "selected" : ""}`;
       opt.style.backgroundColor = color;
       opt.addEventListener("click", () => {
-        picker.querySelectorAll(".color-option").forEach(el => el.classList.remove("selected"));
+        colorPicker.querySelectorAll(".color-option").forEach(c => c.classList.remove("selected"));
         opt.classList.add("selected");
+        state.config.playerColors[i] = color;
       });
-      picker.appendChild(opt);
+      colorPicker.appendChild(opt);
+    });
+
+    nameInput.addEventListener("input", (e) => {
+      state.config.playerNames[i] = e.target.value;
     });
 
     item.appendChild(nameInput);
-    item.appendChild(picker);
+    item.appendChild(colorPicker);
     container.appendChild(item);
   }
 }
 
 // =============================================================================
-// RENDERING Y SELECCIÓN DE CATEGORÍAS
+// CATEGORÍAS EN INICIO (ORIGINAL CON TAGS Y ESTILOS)
 // =============================================================================
-function renderCategorySelection() {
+function renderCategories() {
   const grid = document.getElementById("categories");
   if (!grid) return;
   grid.innerHTML = "";
 
-  currentWORD_DATA.forEach((catObj, index) => {
+  WORD_DATA.forEach((catObj, index) => {
     const card = document.createElement("div");
     card.className = "category-card";
-    card.dataset.index = index;
-
-    const title = document.createElement("h4");
-    title.textContent = catObj.category;
-
-    const fortext = document.createElement("p");
-    fortext.textContent = catObj.fortext || "";
-
-    if (catObj.tags && catObj.tags.length > 0) {
-      catObj.tags.forEach(tag => {
-        const badge = document.createElement("span");
-        badge.className = "badge";
-        badge.textContent = tag;
-        card.appendChild(badge);
-      });
+    if (state.selectedCategoryIndices.includes(index)) {
+      card.classList.add("selected");
     }
 
-    card.appendChild(title);
-    card.appendChild(fortext);
+    let tagsHTML = "";
+    if (catObj.tags && catObj.tags.length > 0) {
+      tagsHTML = catObj.tags.map(tag => `<span class="badge">${tag}</span>`).join(" ");
+    }
+
+    card.innerHTML = `
+      ${tagsHTML}
+      <h4>${catObj.category}</h4>
+      <p>${catObj.fortext || ""}</p>
+    `;
 
     card.addEventListener("click", () => {
-      card.classList.toggle("selected");
+      if (state.selectedCategoryIndices.includes(index)) {
+        state.selectedCategoryIndices = state.selectedCategoryIndices.filter(i => i !== index);
+        card.classList.remove("selected");
+      } else {
+        state.selectedCategoryIndices.push(index);
+        card.classList.add("selected");
+      }
       updateCategoryCountLabel();
     });
 
@@ -226,68 +237,47 @@ function renderCategorySelection() {
 }
 
 function updateCategoryCountLabel() {
-  const selectedCards = document.querySelectorAll(".category-card.selected");
   const countLabel = document.getElementById("category-count");
   const suggestedCount = parseInt(document.getElementById("config-cat-count")?.value || "3", 10);
   if (countLabel) {
-    countLabel.textContent = `${t("categoryCount")} (${selectedCards.length} / ${suggestedCount})`;
+    countLabel.textContent = `${t("categoryCount")} (${state.selectedCategoryIndices.length} / ${suggestedCount})`;
   }
 }
 
 function selectRandomCategories() {
-  const cards = Array.from(document.querySelectorAll(".category-card"));
-  cards.forEach(c => c.classList.remove("selected"));
-
   const targetCount = parseInt(document.getElementById("config-cat-count")?.value || "3", 10);
-  const shuffled = cards.sort(() => 0.5 - Math.random());
-  
-  shuffled.slice(0, Math.min(targetCount, cards.length)).forEach(c => {
-    c.classList.add("selected");
-  });
-
-  updateCategoryCountLabel();
+  const indices = WORD_DATA.map((_, i) => i).sort(() => 0.5 - Math.random());
+  state.selectedCategoryIndices = indices.slice(0, Math.min(targetCount, WORD_DATA.length));
+  renderCategories();
 }
 
 // =============================================================================
-// LÓGICA DE INICIO DEL JUEGO
+// INICIO Y BARAJADO DE PARTIDA
 // =============================================================================
 function startGame() {
-  const selectedCards = document.querySelectorAll(".category-card.selected");
   const errorEl = document.getElementById("start-error");
-
-  if (selectedCards.length === 0) {
+  if (state.selectedCategoryIndices.length === 0) {
     if (errorEl) errorEl.textContent = t("selectCategories", { n: 1 });
     return;
   }
   if (errorEl) errorEl.textContent = "";
 
-  // Guardar configuración de jugadores
-  const playerItems = document.querySelectorAll(".player-color-item");
-  currentGame.players = Array.from(playerItems).map((item, idx) => {
-    const name = item.querySelector("input[type='text']")?.value || `${t("player")} ${idx + 1}`;
-    const selectedColorEl = item.querySelector(".color-option.selected");
-    const color = selectedColorEl ? selectedColorEl.style.backgroundColor : COLOR_PALETTE[idx % COLOR_PALETTE.length];
-    return { name, color, score: 0 };
-  });
+  state.config.turnTime = parseInt(document.getElementById("turn-time")?.value || "120", 10);
+  state.config.rounds = parseInt(document.getElementById("round-total")?.value || "3", 10);
 
-  currentGame.turnTime = parseInt(document.getElementById("turn-time")?.value || "120", 10);
-  currentGame.roundTotal = parseInt(document.getElementById("round-total")?.value || "3", 10);
-  currentGame.currentRound = 1;
-  currentGame.currentPlayerIndex = 0;
-  currentGame.discoveredCount = 0;
+  state.scores = state.config.playerNames.map(() => 0);
+  state.currentPlayerIndex = 0;
+  state.round = 1;
+  state.discoveredCount = 0;
 
-  // Extraer categorías y palabras seleccionadas
-  currentGame.selectedCategories = Array.from(selectedCards).map(card => {
-    const idx = parseInt(card.dataset.index, 10);
-    return currentWORD_DATA[idx];
-  });
-
-  // Preparar lista de palabras a adivinar
-  currentGame.wordsToGuess = [];
-  currentGame.selectedCategories.forEach(catGroup => {
+  // Construir el mazo de palabras
+  state.deck = [];
+  state.selectedCategoryIndices.forEach(catIdx => {
+    const catGroup = WORD_DATA[catIdx];
     catGroup.words.forEach(sub => {
       sub.words.forEach((wordString, wIdx) => {
-        currentGame.wordsToGuess.push({
+        state.deck.push({
+          parentCategoryObj: catGroup,
           parentCategory: catGroup.category,
           subCategory: sub.category,
           originalWord: wordString,
@@ -298,43 +288,47 @@ function startGame() {
     });
   });
 
-  // Cambiar pantallas
+  state.deck.sort(() => 0.5 - Math.random());
+  state.currentWordIndex = 0;
+
   document.getElementById("screen-start")?.classList.add("hidden");
   document.getElementById("screen-game")?.classList.remove("hidden");
 
   renderScoreboard();
   renderBoard();
-  loadCurrentWordTurn();
+  loadTurn();
 }
 
 // =============================================================================
-// GESTIÓN DE TURNOS Y TIMERS
+// LÓGICA DE TURNO Y PANTALLA DE JUEGO
 // =============================================================================
-function loadCurrentWordTurn() {
-  const currentWordObj = getCurrentWord();
-  if (!currentWordObj) {
+function getCurrentWord() {
+  return state.deck[state.currentWordIndex];
+}
+
+function loadTurn() {
+  const wordObj = getCurrentWord();
+  if (!wordObj) {
     endGame();
     return;
   }
 
+  state.hintsUsedForCurrentWord = 0;
+  state.revealedVowels = [];
+
   updateTurnUI();
-  setupWordInputFields(currentWordObj);
-  setupCategoryChoices();
+  renderClueStage(wordObj);
+  setupWordInputFields(wordObj);
+  setupSubcategoryChoices(wordObj);
   startTimer();
 }
 
-function getCurrentWord() {
-  return currentGame.wordsToGuess.find(w => !w.guessed);
-}
-
 function updateTurnUI() {
-  const activePlayer = currentGame.players[currentGame.currentPlayerIndex];
-  
   const roundLabel = document.getElementById("round-label");
-  if (roundLabel) roundLabel.textContent = `${t("round")} ${currentGame.currentRound} / ${currentGame.roundTotal}`;
+  if (roundLabel) roundLabel.textContent = `${t("round")} ${state.round} / ${state.config.rounds}`;
 
   const turnLabel = document.getElementById("turn-label");
-  if (turnLabel) turnLabel.textContent = `${t("turn")} ${activePlayer.name}`;
+  if (turnLabel) turnLabel.textContent = `${t("turn")} ${state.config.playerNames[state.currentPlayerIndex]}`;
 
   renderScoreboard();
 }
@@ -344,89 +338,54 @@ function renderScoreboard() {
   if (!container) return;
   container.innerHTML = "";
 
-  currentGame.players.forEach((p, idx) => {
+  state.config.playerNames.forEach((name, idx) => {
     const card = document.createElement("div");
-    card.className = `score ${idx === currentGame.currentPlayerIndex ? "active" : ""}`;
-    card.style.setProperty("--player-color", p.color);
+    card.className = `score ${idx === state.currentPlayerIndex ? "active" : ""}`;
+    card.style.setProperty("--player-color", state.config.playerColors[idx]);
 
-    const nameEl = document.createElement("div");
-    nameEl.className = "score-name";
-    nameEl.textContent = p.name;
-
-    const ptsEl = document.createElement("div");
-    ptsEl.className = "score-pts";
-    ptsEl.textContent = `${p.score} ${t("points")}`;
-
-    card.appendChild(nameEl);
-    card.appendChild(ptsEl);
+    card.innerHTML = `
+      <div class="score-name">${name}</div>
+      <div class="score-pts">${state.scores[idx]} ${t("points")}</div>
+    `;
     container.appendChild(card);
   });
 }
 
-function startTimer() {
-  clearInterval(currentGame.timerInterval);
-  currentGame.timeLeft = currentGame.turnTime;
-  currentGame.isPaused = false;
-  updateTimerDisplay();
+// Conserva la lógica de visibilidad de consonantes y reemplazo de emojis
+function renderClueStage(wordObj) {
+  const clueStage = document.getElementById("clue-stage");
+  if (!clueStage) return;
 
-  currentGame.timerInterval = setInterval(() => {
-    if (!currentGame.isPaused) {
-      currentGame.timeLeft--;
-      updateTimerDisplay();
-      if (currentGame.timeLeft <= 0) {
-        clearInterval(currentGame.timerInterval);
-        handleTimeout();
+  const VOWELS = "AEIOUÁÉÍÓÚ";
+  let displayed = "";
+
+  for (let char of wordObj.originalWord) {
+    const upperChar = char.toUpperCase();
+    if (VOWELS.includes(upperChar)) {
+      if (state.revealedVowels.includes(upperChar)) {
+        displayed += char;
+      } else {
+        displayed += "_";
       }
+    } else {
+      displayed += char; // Las consonantes, espacios y conectores se mantienen visibles
     }
-  }, 1000);
-}
-
-function updateTimerDisplay() {
-  const timerEl = document.getElementById("timer");
-  if (!timerEl) return;
-  const mins = Math.floor(currentGame.timeLeft / 60).toString().padStart(2, "0");
-  const secs = (currentGame.timeLeft % 60).toString().padStart(2, "0");
-  timerEl.textContent = `${mins}:${secs}`;
-  if (currentGame.timeLeft <= 10) {
-    timerEl.classList.add("warning");
-  } else {
-    timerEl.classList.remove("warning");
   }
+
+  // Mapeo de Emojis
+  Object.keys(EMOJI_MAP).forEach(key => {
+    const reg = new RegExp(key, "gi");
+    displayed = displayed.replace(reg, EMOJI_MAP[key]);
+  });
+
+  clueStage.textContent = displayed;
 }
 
-function togglePauseTimer() {
-  const btn = document.getElementById("pause-time");
-  currentGame.isPaused = !currentGame.isPaused;
-  if (btn) {
-    btn.textContent = currentGame.isPaused ? t("resume") : t("pause");
-  }
-}
-
-function handleTimeout() {
-  showFeedbackModal(t("timeout"));
-  nextTurn();
-}
-
-function nextTurn() {
-  currentGame.currentPlayerIndex = (currentGame.currentPlayerIndex + 1) % currentGame.players.length;
-  loadCurrentWordTurn();
-}
-
-// =============================================================================
-// CAMPOS DE ADIVINANZA Y CATEGORÍAS
-// =============================================================================
 function setupWordInputFields(wordObj) {
   const container = document.getElementById("guess-words");
-  const clueStage = document.getElementById("clue-stage");
-  if (!container || !clueStage) return;
-
+  if (!container) return;
   container.innerHTML = "";
 
-  // Enmascarar consonantes/vocales según las reglas del juego
-  const maskedText = maskWord(wordObj.originalWord);
-  clueStage.textContent = applyEmojis(maskedText);
-
-  // Generar inputs para palabras escritas en MAYÚSCULAS
   const parts = wordObj.originalWord.split(" ");
   parts.forEach((part, idx) => {
     if (part === part.toUpperCase() && part.length > 1) {
@@ -440,28 +399,20 @@ function setupWordInputFields(wordObj) {
   });
 }
 
-function maskWord(fullWord) {
-  return fullWord.replace(/[A-ZÁÉÍÓÚÑ]/g, "_");
-}
-
-function applyEmojis(text) {
-  let result = text;
-  Object.keys(currentEMOJI_MAP).forEach(key => {
-    const reg = new RegExp(key, "gi");
-    result = result.replace(reg, currentEMOJI_MAP[key]);
-  });
-  return result;
-}
-
-function setupCategoryChoices() {
+// CAMBIO SOLICITADO: Muestra las SUBCATEGORÍAS de la categoría correspondiente
+function setupSubcategoryChoices(wordObj) {
   const container = document.getElementById("guess-categories");
   if (!container) return;
   container.innerHTML = "";
 
-  currentGame.selectedCategories.forEach(catObj => {
+  // Obtener todas las subcategorías que pertenecen a la categoría actual
+  const parentCat = wordObj.parentCategoryObj;
+  const subcategories = parentCat.words.map(sub => sub.category);
+
+  subcategories.forEach(subName => {
     const btn = document.createElement("button");
     btn.className = "category-choice";
-    btn.textContent = catObj.category;
+    btn.textContent = subName;
     btn.addEventListener("click", () => {
       container.querySelectorAll(".category-choice").forEach(b => b.classList.remove("selected"));
       btn.classList.add("selected");
@@ -471,73 +422,155 @@ function setupCategoryChoices() {
 }
 
 // =============================================================================
-// VERIFICACIÓN DE RESPUESTAS Y PUNTUACIÓN
+// REVELAR PISTA: HINT Y VOCALES (NUNCA REVELA LA SUBCATEGORÍA)
 // =============================================================================
-function handleGuessSubmit() {
+function handleRevealHintButton() {
+  if (state.scores[state.currentPlayerIndex] > 0) {
+    state.scores[state.currentPlayerIndex] -= 1;
+  }
+  renderScoreboard();
+
   const currentWordObj = getCurrentWord();
   if (!currentWordObj) return;
 
+  // Paso 1: Revela la pista (help) en el primer clic
+  if (state.hintsUsedForCurrentWord === 0 && currentWordObj.help) {
+    state.hintsUsedForCurrentWord++;
+    showFeedbackModal(t("hintHelp", { help: currentWordObj.help }));
+    return;
+  }
+
+  // Paso 2: Revela una vocal nueva no descubierta en los siguientes clics
+  const VOWELS = ["A", "E", "I", "O", "U", "Á", "É", "Í", "Ó", "Ú"];
+  const unrevealedInWord = [];
+
+  for (let char of currentWordObj.originalWord.toUpperCase()) {
+    if (VOWELS.includes(char) && !state.revealedVowels.includes(char)) {
+      if (!unrevealedInWord.includes(char)) {
+        unrevealedInWord.push(char);
+      }
+    }
+  }
+
+  if (unrevealedInWord.length > 0) {
+    const randomVowel = unrevealedInWord[Math.floor(Math.random() * unrevealedInWord.length)];
+    state.revealedVowels.push(randomVowel);
+    state.hintsUsedForCurrentWord++;
+    renderClueStage(currentWordObj);
+    showFeedbackModal(t("hintVowel") + ` (${randomVowel})`);
+  } else {
+    showFeedbackModal(currentWordObj.help ? t("hintHelp", { help: currentWordObj.help }) : "No hay más pistas.");
+  }
+}
+
+// =============================================================================
+// VALIDACIÓN DE RESPUESTAS Y SUBCATEGORÍA
+// =============================================================================
+function handleGuess() {
+  const wordObj = getCurrentWord();
+  if (!wordObj) return;
+
   const inputs = document.querySelectorAll(".guess-word-input");
   const userWords = Array.from(inputs).map(i => i.value.trim().toUpperCase());
-  const selectedCatBtn = document.querySelector(".category-choice.selected");
-  const userCategory = selectedCatBtn ? selectedCatBtn.textContent : "";
 
-  // Evaluación de la palabra correcta
-  const uppercaseTargetParts = currentWordObj.originalWord
+  const selectedSubBtn = document.querySelector(".category-choice.selected");
+  const userSubcategory = selectedSubBtn ? selectedSubBtn.textContent : "";
+
+  const uppercaseTargetParts = wordObj.originalWord
     .split(" ")
     .filter(p => p === p.toUpperCase() && p.length > 1);
 
   const isWordCorrect = uppercaseTargetParts.every((part, i) => part === userWords[i]);
-  const isCategoryCorrect = userCategory === currentWordObj.parentCategory;
+  const isSubcategoryCorrect = userSubcategory === wordObj.subCategory;
 
-  const activePlayer = currentGame.players[currentGame.currentPlayerIndex];
-
-  if (isWordCorrect && isCategoryCorrect) {
-    activePlayer.score += 3;
-    currentWordObj.guessed = true;
-    currentGame.discoveredCount++;
+  if (isWordCorrect && isSubcategoryCorrect) {
+    state.scores[state.currentPlayerIndex] += 3;
+    wordObj.guessed = true;
+    state.discoveredCount++;
     updateDiscoveredCounter();
     renderBoard();
     showFeedbackModal(`${t("correct")} +3 ${t("points")}`);
-    clearInterval(currentGame.timerInterval);
-    nextTurn();
-  } else if (isWordCorrect && !isCategoryCorrect) {
-    activePlayer.score += 2;
+    clearInterval(state.timer);
+    nextTurn(true);
+  } else if (isWordCorrect && !isSubcategoryCorrect) {
+    state.scores[state.currentPlayerIndex] += 2;
     showFeedbackModal(t("wordOnlyPoints", { points: 2 }));
-    nextTurn();
-  } else if (!isWordCorrect && isCategoryCorrect) {
-    activePlayer.score += 1;
+    nextTurn(false);
+  } else if (!isWordCorrect && isSubcategoryCorrect) {
+    state.scores[state.currentPlayerIndex] += 1;
     showFeedbackModal(t("categoryOnlyPoints", { points: 1 }));
-    nextTurn();
+    nextTurn(false);
   } else {
     showFeedbackModal(t("incorrect"));
-    nextTurn();
+    nextTurn(false);
   }
 }
 
-function handleRevealHint() {
-  const activePlayer = currentGame.players[currentGame.currentPlayerIndex];
-  if (activePlayer.score > 0) {
-    activePlayer.score -= 1;
+function nextTurn(advanceWord = false) {
+  if (advanceWord) {
+    state.currentWordIndex++;
   }
-  const currentWordObj = getCurrentWord();
-  if (currentWordObj && currentWordObj.help) {
-    showFeedbackModal(t("hintHelp", { help: currentWordObj.help }));
+  state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.config.playersCount;
+
+  if (state.currentPlayerIndex === 0) {
+    state.round++;
+  }
+
+  if (state.round > state.config.rounds || state.currentWordIndex >= state.deck.length) {
+    endGame();
   } else {
-    showFeedbackModal(t("hintSubcategory", { category: currentWordObj?.subCategory || "" }));
+    loadTurn();
   }
-  renderScoreboard();
 }
 
 // =============================================================================
-// TABLERO DE PALABRAS DESCUBIERTAS
+// TEMPORIZADOR Y CONTROLES
 // =============================================================================
+function startTimer() {
+  clearInterval(state.timer);
+  state.timeLeft = state.config.turnTime;
+  state.isPaused = false;
+  updateTimerDisplay();
+
+  state.timer = setInterval(() => {
+    if (!state.isPaused) {
+      state.timeLeft--;
+      updateTimerDisplay();
+      if (state.timeLeft <= 0) {
+        clearInterval(state.timer);
+        showFeedbackModal(t("timeout"));
+        nextTurn(false);
+      }
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const timerEl = document.getElementById("timer");
+  if (!timerEl) return;
+  const mins = Math.floor(state.timeLeft / 60).toString().padStart(2, "0");
+  const secs = (state.timeLeft % 60).toString().padStart(2, "0");
+  timerEl.textContent = `${mins}:${secs}`;
+  if (state.timeLeft <= 10) {
+    timerEl.classList.add("warning");
+  } else {
+    timerEl.classList.remove("warning");
+  }
+}
+
+function togglePause() {
+  const btn = document.getElementById("pause-time");
+  state.isPaused = !state.isPaused;
+  if (btn) btn.textContent = state.isPaused ? t("resume") : t("pause");
+}
+
 function renderBoard() {
   const container = document.getElementById("board-categories");
   if (!container) return;
   container.innerHTML = "";
 
-  currentGame.selectedCategories.forEach(catObj => {
+  state.selectedCategoryIndices.forEach(catIdx => {
+    const catObj = WORD_DATA[catIdx];
     const catBlock = document.createElement("div");
     catBlock.className = "board-category";
 
@@ -548,7 +581,7 @@ function renderBoard() {
     const wordList = document.createElement("div");
     wordList.className = "word-list";
 
-    currentGame.wordsToGuess
+    state.deck
       .filter(w => w.parentCategory === catObj.category && w.guessed)
       .forEach(w => {
         const chip = document.createElement("div");
@@ -565,12 +598,9 @@ function renderBoard() {
 
 function updateDiscoveredCounter() {
   const counter = document.getElementById("discovered-count");
-  if (counter) counter.textContent = currentGame.discoveredCount;
+  if (counter) counter.textContent = state.discoveredCount;
 }
 
-// =============================================================================
-// MODALES Y PANTALLA DE FIN DE JUEGO
-// =============================================================================
 function showFeedbackModal(msg) {
   const modal = document.getElementById("feedback-modal");
   const msgEl = document.getElementById("feedback-message");
@@ -584,14 +614,14 @@ function hideFeedbackModal() {
   document.getElementById("feedback-modal")?.classList.add("hidden");
 }
 
-function handleContinueAfterReveal() {
+function continueAfterReveal() {
   document.getElementById("reveal-in-column")?.classList.add("hidden");
   document.getElementById("game-active-panel")?.classList.remove("hidden");
-  nextTurn();
+  nextTurn(true);
 }
 
 function endGame() {
-  clearInterval(currentGame.timerInterval);
+  clearInterval(state.timer);
   document.getElementById("screen-game")?.classList.add("hidden");
   document.getElementById("screen-end")?.classList.remove("hidden");
 
@@ -602,17 +632,15 @@ function endGame() {
   if (!container) return;
   container.innerHTML = "";
 
-  const sortedPlayers = [...currentGame.players].sort((a, b) => b.score - a.score);
-
-  sortedPlayers.forEach(p => {
+  state.config.playerNames.forEach((name, idx) => {
     const row = document.createElement("div");
     row.className = "final-score";
-    row.innerHTML = `<strong>${p.name}</strong><span>${p.score} ${t("points")}</span>`;
+    row.innerHTML = `<strong>${name}</strong><span>${state.scores[idx]} ${t("points")}</span>`;
     container.appendChild(row);
   });
 }
 
-function resetToStartScreen() {
+function resetGame() {
   document.getElementById("screen-end")?.classList.add("hidden");
   document.getElementById("screen-start")?.classList.remove("hidden");
 }
