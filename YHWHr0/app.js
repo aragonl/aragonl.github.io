@@ -30,7 +30,8 @@ const state = {
   remainingSeconds: 120,
   gameOver: false,
   playerColors: [],
-  revealType: null
+  revealType: null,
+  lastAwardedPoints: 0
 };
 
 async function loadLanguage(lang) {
@@ -450,6 +451,7 @@ function startGame() {
   state.guessedWordParts = [];
   state.guessedCategory = false;
   state.revealType = "initial";
+  state.lastAwardedPoints = 0;
 
   moveHeaderControlsToGame();
   $("screen-start")?.classList.add("hidden");
@@ -476,6 +478,7 @@ function nextWord() {
   state.selectedGuessCategory = "";
   state.guessedWordParts = [];
   state.guessedCategory = false;
+  state.lastAwardedPoints = 0;
   hideFeedbackModal();
   renderGuessInputs();
   updateRoundUI();
@@ -533,7 +536,26 @@ function populateCategorySelect() {
   const current = state.selectedGuessCategory || "";
   container.innerHTML = "";
 
-  // Busca el objeto de la categoría principal de la palabra actual
+  const mainCatIndex = WORD_DATA.findIndex(c => c.category === state.currentWord.mainCategory);
+  const selectedOrderIndex = state.selectedCategories.indexOf(mainCatIndex);
+  const mainCatColor = selectedOrderIndex !== -1 ? categoryColor(selectedOrderIndex) : "#e7e7e7";
+
+  const headerDiv = document.createElement("div");
+  headerDiv.className = "main-category-banner";
+  headerDiv.style.backgroundColor = mainCatColor;
+  headerDiv.style.padding = "6px 12px";
+  headerDiv.style.borderRadius = "6px";
+  headerDiv.style.marginBottom = "8px";
+  headerDiv.style.fontWeight = "bold";
+  headerDiv.style.textAlign = "center";
+  headerDiv.textContent = formatWordWithEmojis(state.currentWord.mainCategory);
+  container.appendChild(headerDiv);
+
+  const buttonsWrapper = document.createElement("div");
+  buttonsWrapper.className = "subcategories-buttons";
+  buttonsWrapper.style.display = "flex";
+  buttonsWrapper.style.gap = "8px";
+
   const mainCatObj = WORD_DATA.find(c => c.category === state.currentWord.mainCategory);
   const subcategories = mainCatObj ? mainCatObj.words.map(sub => sub.category) : [state.currentWord.subcategory];
 
@@ -546,6 +568,7 @@ function populateCategorySelect() {
     btn.type = "button";
     btn.className = `category-choice ${isSelected || isCorrectCategory ? "selected" : ""}`;
     btn.textContent = formatWordWithEmojis(subName);
+    btn.style.flex = "1";
 
     if (state.guessedCategory) btn.disabled = true;
     btn.addEventListener("click", () => {
@@ -553,8 +576,10 @@ function populateCategorySelect() {
       state.selectedGuessCategory = normalize(current) === normalize(subName) ? "" : subName;
       populateCategorySelect();
     });
-    container.appendChild(btn);
+    buttonsWrapper.appendChild(btn);
   });
+
+  container.appendChild(buttonsWrapper);
 }
 
 function updateRoundUI() {
@@ -612,9 +637,11 @@ function renderClue() {
   });
 
   const clues = [];
+
   if (stage >= 1 && w.help) {
     clues.push(`<span class="hint-attention">${escapeHtml(t("hintHelp", { help: w.help }))}</span>`);
   }
+  
   if (stage >= 2) {
     clues.push(`<span class="hint-attention">${escapeHtml(t("hintVowel"))}</span>`);
   }
@@ -630,7 +657,6 @@ function revealHintManual() {
   if (!state.currentWord || state.gameOver) return;
 
   let advanced = false;
-  const w = state.currentWord;
 
   if (state.currentClueRound === 0) {
     state.currentClueRound = 1;
@@ -694,6 +720,7 @@ function submitGuess() {
 
   awarded = Math.max(0, awarded);
   state.scores[state.currentPlayer] += awarded;
+  state.lastAwardedPoints = (state.lastAwardedPoints || 0) + awarded;
 
   if (allDone) {
     stopTimer();
@@ -702,8 +729,9 @@ function submitGuess() {
     renderBoard();
     
     const winnerName = getPlayerName(state.currentPlayer);
+    const finalPoints = state.lastAwardedPoints;
     state.primaryPlayer = (state.primaryPlayer + 1) % state.players;
-    startComputerReveal("guessed", state.currentWord, winnerName);
+    startComputerReveal("guessed", state.currentWord, winnerName, finalPoints);
     return;
   }
 
@@ -816,7 +844,7 @@ function renderTimer() {
   }
 }
 
-function startComputerReveal(type = "computer", word = null, winnerName = null) {
+function startComputerReveal(type = "computer", word = null, winnerName = null, points = 0) {
   stopTimer();
   const available = state.words.filter(w => !state.usedWordIds.has(w.id));
   const revealWord = word || available[Math.floor(Math.random() * available.length)];
@@ -840,7 +868,10 @@ function startComputerReveal(type = "computer", word = null, winnerName = null) 
     titleText = t("revealedUnansweredTitle");
   } else if (type === "guessed") {
     titleText = t("guessedWordTitle") || "¡Palabra Adivinada!";
-    badgeText = winnerName ? (t("pointsForPlayer", { name: winnerName }) || `Puntos para ${winnerName}`) : "¡Adivinada!";
+    const formattedPts = formatPoints(points);
+    badgeText = winnerName 
+      ? (t("pointsForPlayer", { name: winnerName, points: formattedPts }) || `+${formattedPts} puntos para ${winnerName}`) 
+      : "¡Adivinada!";
   }
 
   if ($("reveal-title")) $("reveal-title").textContent = titleText;
